@@ -2,7 +2,7 @@ import express from "express";
 import { pool } from "../config/dbConfig.js";
 const router = express.Router();
 
-router.get('/config/gti_directory', async (req, res) => {
+router.get('/gtidirectory', async (req, res) => { 
   try {
     const result = await pool.query(`
       SELECT
@@ -19,7 +19,7 @@ router.get('/config/gti_directory', async (req, res) => {
     `);
     res.render('gti_directory', {
       users: result.rows,
-      user: req.user // si lo usas para navbar/avatar
+      user: req.user 
     });
   } catch (err) {
     console.error(err);
