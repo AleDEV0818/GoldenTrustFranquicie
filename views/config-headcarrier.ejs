@@ -83,7 +83,7 @@
 
         <ul class="menu-inner py-1">
 
-          <!-- Dashboard -->
+              <!-- Dashboard -->
 
           <li class="menu-item">
             <a href="/users/dashboard" class="menu-link">
@@ -92,25 +92,94 @@
             </a>
           </li>
 
+                    <li class="menu-item">
+  <a href="/users/statistics/policies" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-chart-bar"></i>
+    <div data-i18n="Stats">Stats</div>
+  </a>
+</li>
+                          <li class="menu-item ">
+                  <a href="/users/agency" class="menu-link">
+                  <i class="menu-icon tf-icons ti ti-home-heart"></i>
+           <div data-i18n="Agencies">Agencies</div>
+           </a>
+                  </li>
+
+<!-- 
+                <li class="menu-item active">
+            <a href="/users/renewals/agency-upcoming-renewals" class="menu-link">
+          <i class="menu-icon tf-icons ti ti-refresh"></i>
+         <div data-i18n="Reviews">Reviews</div>
+           </a>
+                              </li>
+
+-->
+
+
+          <li class="menu-item">
+         <a href="/users/gtidirectory" class="menu-link">
+        <i class="menu-icon tf-icons ti ti-address-book"></i>
+          <div data-i18n="GTI Directory">GTI Directory</div>
+              </a>
+                  </li>
+
+
+<li class="menu-item">
+  <a href="javascript:void(0);" class="menu-link menu-toggle">
+    <i class="menu-icon tf-icons ti ti-device-tv"></i>
+    <div data-i18n="TV">TV</div>
+  </a>
+  <ul class="menu-sub">
+    <li class="menu-item">
+      <a href="/televisor/totals" class="menu-link">
+        <div data-i18n="New Business">New Business</div>
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="/televisor-renewed/totals" class="menu-link">
+        <div data-i18n="Renewals">Renewals</div>
+      </a>
+    </li>
+ <% if (user && user.location_type === 1) { %>
+  <li class="menu-item">
+    <a href="/api/franchise/render" class="menu-link">
+      <div data-i18n="Franchise TV">Franchise TV</div>
+    </a>
+  </li>
+<% } %>
+  </ul>
+</li>
+
+
+ <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="MARKETING">MARKETING</span>
+
+<li class="menu-item">
+  <a href="/users/renewals/message-center" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-speakerphone"></i> 
+    <div data-i18n="Message Center">Message Center</div>
+  </a>
+</li>
 
 
           <!-- ////////////////ADMIN/////////////////////// -->
+ <% if (user && user.location_type === 1 && user.department && user.department.trim() === "Marketing & IT") { %>  
+  <li class="menu-header small text-uppercase">
+    <span class="menu-header-text" data-i18n="ADMIN">ADMIN</span>
+  </li>
+  <li class="menu-item">
+    <a href="/users/config/headcarriers" class="menu-link">
+      <i class="menu-icon tf-icons ti ti-settings-check"></i>
+      <div data-i18n="Config">Config</div>
+    </a>
+  </li>
+<% } %>
 
-          <li class="menu-header small text-uppercase">
-            <span class="menu-header-text" data-i18n="ADMIN">ADMIN</span>
-          </li>
+    
 
-          <li class="menu-item active">
-            <a href="/users/config/headcarriers" class="menu-link">
-              <i class="menu-icon tf-icons ti ti-settings-check"></i>
-              <div data-i18n="Config">Config</div>
-            </a>
-       <li class="menu-item active">
-  <a href="/users/gtidirectory" class="menu-link">
-    <i class="menu-icon tf-icons ti ti-address-book"></i>
-    <div data-i18n="GTI Directory">GTI Directory</div>
-  </a>
-</li>
+
+           
+
 
         </ul>
 
@@ -250,202 +319,229 @@
 
         <!-- / Navbar -->
 
-        <!-- Content wrapper -->
-        <div class="content-wrapper">
-          <!-- Content -->
+ <!-- Content wrapper -->
+<div class="content-wrapper">
+  <!-- Content -->
+  <div class="container-xxl flex-grow-1 container-p-y">
 
-          <div class="container-xxl flex-grow-1 container-p-y">
+<!-- Configuración To Reach Goal -->
+<div class="card mb-3">
+  <div class="card-body">
+    <form action="/users/config/headcarrier/setGoal" method="POST" class="row align-items-center">
+      <div class="col-auto">
+        <label for="monthly_goal" class="form-label mb-0"><b>To Reach Goal ($)</b></label>
+      </div>
+      <div class="col-auto">
+        <input type="number" min="0" step="1000" class="form-control" id="monthly_goal" name="monthly_goal" value="<%= monthly_goal %>" required>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Update Goal</button>
+      </div>
+      <div class="col-auto ms-3" style="font-size: 0.97em;">
+        <span class="text-muted">
+          Last updated:
+          <% if (monthly_goal_last_changed) { %>
+            <%= monthly_goal_last_changed.toLocaleString('en-US', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute:'2-digit' }) %>
+          <% } else { %>
+            N/A
+          <% } %>
+          (<%= monthly_goal_changes_count %> change<%= monthly_goal_changes_count == 1 ? '' : 's' %>)
+        </span>
+      </div>
+    </form>
+  </div>
+</div>
 
-            <!-- Renewals Pills -->
-            <ul class="nav nav-pills flex-column flex-md-row mb-4">
-              <li class="nav-item">
-                <a class="nav-link active" href="/users/config/headcarriers"><i class="ti ti-repeat ti-xs me-1"></i>Head
-                  Carrier</a>
-              </li>
-            </ul>
+    <!-- Pills -->
+    <ul class="nav nav-pills flex-column flex-md-row mb-4">
+      <li class="nav-item">
+        <a class="nav-link active" href="/users/config/headcarriers">
+          <i class="ti ti-repeat ti-xs me-1"></i>Head Carrier
+        </a>
+      </li>
+    </ul>
 
-            <!--/ Renewals Pills -->
 
-            <!-- Row grouping -->
-            <div class="card">
-              <h5 class="card-header">Add Head Carrier &nbsp;<a href="javascript:;"
-                  class="btn btn-sm btn-icon item-edit" data-bs-target="#addHeadCarrier" data-bs-toggle="modal"
-                  data-bs-dismiss="modal"><i class="text-primary ti ti-plus"></i></a></h5>
-              <div class="card-datatable table-responsive">
-                <table class="dt-row-grouping table">
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th>Name</th>
-                      <th>Head Carrier</th>
-                      <th>Type</th>
-                      <th>Created</th>
-                      <th>Last Modified</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tfoot>
-                    <tr>
-                      <th></th>
-                      <th>Name</th>
-                      <th>Head Carrier</th>
-                      <th>Type</th>
-                      <th>Created</th>
-                      <th>Last Modified</th>
-                      <th>Action</th>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-            <!--/ Row grouping -->
 
+    <!-- Row grouping (tabla principal) -->
+    <div class="card">
+      <h5 class="card-header">Add Head Carrier &nbsp;
+        <a href="javascript:;" class="btn btn-sm btn-icon item-edit" data-bs-target="#addHeadCarrier" data-bs-toggle="modal" data-bs-dismiss="modal">
+          <i class="text-primary ti ti-plus"></i>
+        </a>
+      </h5>
+      <div class="card-datatable table-responsive">
+        <table class="dt-row-grouping table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Name</th>
+              <th>Head Carrier</th>
+              <th>Type</th>
+              <th>Created</th>
+              <th>Last Modified</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tfoot>
+            <tr>
+              <th></th>
+              <th>Name</th>
+              <th>Head Carrier</th>
+              <th>Type</th>
+              <th>Created</th>
+              <th>Last Modified</th>
+              <th>Action</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+  </div> <!-- /container-xxl -->
+  <!-- / Content -->
+
+  <!-- Add Head Carrier Modal -->
+  <div class="modal fade" id="addHeadCarrier" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-simple modal-edit-user">
+      <div class="modal-content p-3 p-md-5">
+        <div class="modal-body">
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div class="text-center mb-4">
+            <h3 class="mb-2">Add Head Carrier</h3>
+            <p class="text-muted">The head carriers groups all the programs offered by the companies</p>
           </div>
-          <!-- / Content -->
-
-          <!-- Add Head Carrier Modal -->
-          <div class="modal fade" id="addHeadCarrier" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-simple modal-edit-user">
-              <div class="modal-content p-3 p-md-5">
-                <div class="modal-body">
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  <div class="text-center mb-4">
-                    <h3 class="mb-2">Add Head Carrier</h3>
-                    <p class="text-muted">The head carriers groups all the programs offered by the companies</p>
-                  </div>
-                  <form id="editRfForm" class="row g-3" onsubmit="return validateForm()" method="post"
-                    action="/users/config/headcarrier/addHeadCarrier">
-                    <div class="col-12 col-md-6">
-                      <label for="name" class="form-label">Head Carrier</label>
-                      <input class="form-control" type="text" id="name" name="name" required />
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label for="select2Basic" class="form-label">Carrier or MGA</label>
-                      <select id="select2Basic" class="select2 form-select form-select-lg input-group-text"
-                        data-allow-clear="true" name="carrier_id">
-                        <%carriers.forEach(element=> {%>
-                          <option value="<%=element.entity_id%>">
-                            <%=element.display_name%>
-                          </option>
-                          <%})%>
-                      </select>
-                    </div>
-                    <div class="col-12 text-center">
-                      <button type="submit" class="btn btn-primary me-sm-3 me-1">Submit</button>
-                      <button type="reset" class="btn btn-label-secondary" data-bs-dismiss="modal" aria-label="Close">
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
+          <form id="editRfForm" class="row g-3" method="post"
+            action="/users/config/headcarrier/addHeadCarrier">
+            <div class="col-12 col-md-6">
+              <label for="name" class="form-label">Head Carrier</label>
+              <input class="form-control" type="text" id="name" name="name" required />
             </div>
-          </div>
-          <!--/ Add Head Carrier Modal -->
-
-          <!-- Add Carrier to Head Carrier Modal -->
-          <div class="modal fade" id="addCarrier" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-simple modal-edit-user">
-              <div class="modal-content p-3 p-md-5">
-                <div class="modal-body">
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  <div class="text-center mb-4">
-                    <h3 class="mb-2">Add Company to Head Carrier</h3>
-                    <p class="text-muted">The head carriers groups all the programs offered by the companies</p>
-                  </div>
-                  <form id="editRfForm" class="row g-3" onsubmit="return validateForm()" method="post"
-                    action="/users/config/headcarrier/addHeadCarrier">
-                    <div class="col-12 col-md-6">
-                      <label for="name1" class="form-label">Head Carrier</label>
-                      <input class="form-control" type="text" id="name1" name="name" readonly />
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label for="select2Basic" class="form-label">Carrier or MGA</label>
-                      <select id="select2Basic" class="select2 form-select form-select-lg input-group-text"
-                        data-allow-clear="true" name="carrier_id">
-                        <%carriers.forEach(element=> {%>
-                          <option value="<%=element.entity_id%>">
-                            <%=element.display_name%>
-                          </option>
-                          <%})%>
-                      </select>
-                    </div>
-                    <div class="col-12 text-center">
-                      <button type="submit" class="btn btn-primary me-sm-3 me-1">Submit</button>
-                      <button type="reset" class="btn btn-label-secondary" data-bs-dismiss="modal" aria-label="Close">
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
+            <div class="col-12 col-md-6">
+              <label for="select2Basic" class="form-label">Carrier or MGA</label>
+              <select id="select2Basic" class="select2 form-select form-select-lg input-group-text"
+                data-allow-clear="true" name="carrier_id">
+                <% carriers.forEach(element => { %>
+                  <option value="<%= element.entity_id %>">
+                    <%= element.display_name %>
+                  </option>
+                <% }) %>
+              </select>
             </div>
-          </div>
-          <!--/  Add Carrier to Head Carrier Modal -->
-
-          <!-- Delete Carrier from Head Carrier Modal -->
-          <div class="modal fade" id="deleteCarrier" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-simple modal-edit-user">
-              <div class="modal-content p-3 p-md-5">
-                <div class="modal-body">
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  <div class="text-center mb-4">
-                    <h3 class="mb-2">Delete Company from Head Carrier</h3>
-                    <p class="text-muted">The head carriers groups all the programs offered by the companies</p>
-                  </div>
-                  <form id="editRfForm" class="row g-3" onsubmit="return validateForm()" method="post"
-                    action="/users/config/headcarrier/deleteCarrier">
-                    <input id="contact_id" name="contact_id" class="d-none" />
-                    <div class="col-12 col-md-6">
-                      <label for="name2" class="form-label">Head Carrier</label>
-                      <input class="form-control" type="text" id="name2" name="name2" readonly />
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label for="name2" class="form-label">Carrier or MGA</label>
-                      <input class="form-control" type="text" id="carrierMga" name="name" readonly />
-                    </div>
-                    <div class="col-12 text-center">
-                      <button type="submit" class="btn btn-primary me-sm-3 me-1">Delete</button>
-                      <button type="reset" class="btn btn-label-secondary" data-bs-dismiss="modal" aria-label="Close">
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
+            <div class="col-12 text-center">
+              <button type="submit" class="btn btn-primary me-sm-3 me-1">Submit</button>
+              <button type="reset" class="btn btn-label-secondary" data-bs-dismiss="modal" aria-label="Close">
+                Cancel
+              </button>
             </div>
-          </div>
-          <!--/  Delete Carrier from Head Carrier Modal -->
-
-          <!-- Footer -->
-          <footer class="content-footer footer bg-footer-theme">
-            <div class="container-xxl">
-              <div
-                class="footer-container d-flex align-items-center justify-content-between py-2 flex-md-row flex-column">
-                <div>
-                  ©
-                  <script>
-                    document.write(new Date().getFullYear());
-                  </script>
-                  , &nbsp
-                  <a href="https://goldentrust.com" target="_blank" class="footer-link text-primary fw-medium"> GTI |
-                    Marketing & IT Department</a>
-                </div>
-                <div class="d-none d-lg-inline-block">
-                  <a href="https://goldentrust.com" class="footer-link me-4" target="_blank">GoldenTrust.com</a>
-                  <a href="https://admin.goldensoft.pro" target="_blank" class="footer-link me-4">CRM</a>
-                  <a href="https://365.goldentrustinsurance.com" target="_blank" class="footer-link me-4">Email</a>
-                  <a href="https://internal.goldentrustinsurance.com" target="_blank"
-                    class="footer-link me-4">Intranet</a>
-                </div>
-              </div>
-            </div>
-          </footer>
-          <!-- / Footer -->
-
-          <div class="content-backdrop fade"></div>
+          </form>
         </div>
-        <!-- Content wrapper -->
+      </div>
+    </div>
+  </div>
+  <!--/ Add Head Carrier Modal -->
+
+  <!-- Add Carrier to Head Carrier Modal -->
+  <div class="modal fade" id="addCarrier" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-simple modal-edit-user">
+      <div class="modal-content p-3 p-md-5">
+        <div class="modal-body">
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div class="text-center mb-4">
+            <h3 class="mb-2">Add Company to Head Carrier</h3>
+            <p class="text-muted">The head carriers groups all the programs offered by the companies</p>
+          </div>
+          <form id="editRfForm" class="row g-3" method="post"
+            action="/users/config/headcarrier/addHeadCarrier">
+            <div class="col-12 col-md-6">
+              <label for="name1" class="form-label">Head Carrier</label>
+              <input class="form-control" type="text" id="name1" name="name" readonly />
+            </div>
+            <div class="col-12 col-md-6">
+              <label for="select2Basic" class="form-label">Carrier or MGA</label>
+              <select id="select2Basic" class="select2 form-select form-select-lg input-group-text"
+                data-allow-clear="true" name="carrier_id">
+                <% carriers.forEach(element => { %>
+                  <option value="<%= element.entity_id %>">
+                    <%= element.display_name %>
+                  </option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="col-12 text-center">
+              <button type="submit" class="btn btn-primary me-sm-3 me-1">Submit</button>
+              <button type="reset" class="btn btn-label-secondary" data-bs-dismiss="modal" aria-label="Close">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--/  Add Carrier to Head Carrier Modal -->
+
+  <!-- Delete Carrier from Head Carrier Modal -->
+  <div class="modal fade" id="deleteCarrier" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-simple modal-edit-user">
+      <div class="modal-content p-3 p-md-5">
+        <div class="modal-body">
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div class="text-center mb-4">
+            <h3 class="mb-2">Delete Company from Head Carrier</h3>
+            <p class="text-muted">The head carriers groups all the programs offered by the companies</p>
+          </div>
+          <form id="editRfForm" class="row g-3" method="post"
+            action="/users/config/headcarrier/deleteCarrier">
+            <input id="contact_id" name="contact_id" class="d-none" />
+            <div class="col-12 col-md-6">
+              <label for="name2" class="form-label">Head Carrier</label>
+              <input class="form-control" type="text" id="name2" name="name2" readonly />
+            </div>
+            <div class="col-12 col-md-6">
+              <label for="name2" class="form-label">Carrier or MGA</label>
+              <input class="form-control" type="text" id="carrierMga" name="name" readonly />
+            </div>
+            <div class="col-12 text-center">
+              <button type="submit" class="btn btn-primary me-sm-3 me-1">Delete</button>
+              <button type="reset" class="btn btn-label-secondary" data-bs-dismiss="modal" aria-label="Close">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--/  Delete Carrier from Head Carrier Modal -->
+
+  <!-- Footer -->
+  <footer class="content-footer footer bg-footer-theme">
+    <div class="container-xxl">
+      <div class="footer-container d-flex align-items-center justify-content-between py-2 flex-md-row flex-column">
+        <div>
+          ©
+          <script>
+            document.write(new Date().getFullYear());
+          </script>
+          , &nbsp
+          <a href="https://goldentrust.com" target="_blank" class="footer-link text-primary fw-medium"> GTI |
+            Marketing & IT Department</a>
+        </div>
+        <div class="d-none d-lg-inline-block">
+          <a href="https://goldentrust.com" class="footer-link me-4" target="_blank">GoldenTrust.com</a>
+          <a href="https://admin.goldensoft.pro" target="_blank" class="footer-link me-4">CRM</a>
+          <a href="https://365.goldentrustinsurance.com" target="_blank" class="footer-link me-4">Email</a>
+          <a href="https://internal.goldentrustinsurance.com" target="_blank" class="footer-link me-4">Intranet</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <!-- / Footer -->
+
+  <div class="content-backdrop fade"></div>
+</div>
+<!-- Content wrapper -->
       </div>
       <!-- / Layout page -->
     </div>

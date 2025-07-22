@@ -21,6 +21,7 @@ router.get('/gtidirectory', async (req, res) => {
       users: result.rows,
       user: req.user 
     });
+
   } catch (err) {
     console.error(err);
     res.status(500).send('Error fetching directory');
