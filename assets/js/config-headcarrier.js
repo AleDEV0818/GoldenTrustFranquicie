@@ -4,33 +4,31 @@
 
 'use strict';
 
-//import { render } from "ejs";
-
 let fv, offCanvasEl;
 
-// datatable (jquery)
 $(async function () {
-  var dt_row_grouping_table = $('.dt-row-grouping')
+  var dt_row_grouping_table = $('.dt-row-grouping');
   // Row Grouping
   // --------------------------------------------------------------------
 
-const response = await fetch('/users/config/headcarrier/list', {
-  method: 'POST'
- });
-const data = await response.json();
+  // Cambia a método GET, la lista no debería ser POST para lectura
+  const response = await fetch('/users/config/headcarrier/list', {
+    method: 'GET'
+  });
+  const data = await response.json();
 
   var groupColumn = 2;
   if (dt_row_grouping_table.length) {
     var groupingTable = dt_row_grouping_table.DataTable({
       data: data.data,
       columns: [
-        { data: '' },
-        { data: 'display_name' },
-        { data: 'name' },
-        { data: 'type_display' },
-        { data: 'created_on' },
-        { data: 'date_last_modified' },
-        { data: '' }
+        { data: '' },                // Responsive control
+        { data: 'display_name' },    // Carrier display name
+        { data: 'name' },            // Head Carrier name (agrupador)
+        { data: 'type_display' },    // Type/role
+        { data: 'created_on' },      // Creado
+        { data: 'date_last_modified' }, // Modificado
+        { data: '' }                 // Acciones
       ],
       columnDefs: [
         {
@@ -39,7 +37,7 @@ const data = await response.json();
           orderable: false,
           targets: 0,
           searchable: false,
-          render: function (data, type, full, meta) {
+          render: function () {
             return '';
           }
         },
@@ -76,7 +74,7 @@ const data = await response.json();
             if (last !== group) {
               $(rows)
                 .eq(i)
-                .before('<tr class="group"><td colspan="8" class = "text-primary">' + group + '</td></tr>');
+                .before('<tr class="group"><td colspan="8" class="text-primary fw-bold">' + group + '</td></tr>');
               last = group;
             }
           });
@@ -91,8 +89,8 @@ const data = await response.json();
           }),
           type: 'column',
           renderer: function (api, rowIdx, columns) {
-            var data = $.map(columns, function (col, i) {
-              return col.title !== '' // ? Do not show row in modal popup if title is blank (for check box)
+            var data = $.map(columns, function (col) {
+              return col.title !== ''
                 ? '<tr data-dt-row="' +
                     col.rowIndex +
                     '" data-dt-column="' +
@@ -116,18 +114,17 @@ const data = await response.json();
     });
 
     groupingTable.on('click', 'tr', function () {
-      if( groupingTable.row(this).data()){
-        document.getElementById('name1').value = groupingTable.row(this).data().name;
-        document.getElementById('name2').value = groupingTable.row(this).data().name;
-        document.getElementById('contact_id').value = groupingTable.row(this).data().entity_id;
-        document.getElementById('carrierMga').value = groupingTable.row(this).data().display_name;
+      const rowData = groupingTable.row(this).data();
+      if (rowData) {
+        document.getElementById('name1').value = rowData.name;
+        document.getElementById('name2').value = rowData.name;
+        document.getElementById('contact_id').value = rowData.entity_id;
+        document.getElementById('carrierMga').value = rowData.display_name;
       }
-    })
-
+    });
   }
 
   // Filter form control to default size
-  // ? setTimeout used for multilingual table initialization
   setTimeout(() => {
     $('.dataTables_filter .form-control').removeClass('form-control-sm');
     $('.dataTables_length .form-select').removeClass('form-select-sm');
