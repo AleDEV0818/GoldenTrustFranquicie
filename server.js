@@ -56,7 +56,7 @@ const staticOptions = {
 
 app.use(express.static(path.join(__dirname, 'assets'), staticOptions));
 app.use('/assets', express.static(path.join(__dirname, 'assets'), staticOptions));
-app.use(fileUpload());
+/*app.use(fileUpload());*/
 
 app.use((req, res, next) => {
   res.locals.user = req.user;

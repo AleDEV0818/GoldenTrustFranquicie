@@ -77,21 +77,29 @@
 
         <ul class="menu-inner py-1">
         
-                 <!-- Dashboard -->
+         <!-- / Menu -->
+    
+        <!-- Dashboard -->
 
-          <li class="menu-item">
+          <li class="menu-item ">
             <a href="/users/dashboard" class="menu-link">
               <i class="menu-icon tf-icons ti ti-smart-home"></i>
               <div data-i18n="Dashboard">Dashboard</div>
             </a>
           </li>
 
-                                                             <li class="menu-item ">
+         <li class="menu-item">
   <a href="/users/statistics/policies" class="menu-link">
     <i class="menu-icon tf-icons ti ti-chart-bar"></i>
     <div data-i18n="Stats">Stats</div>
   </a>
-</li>
+ </li>
+
+
+ <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="Sales">Sales</span>
+
+
           
                           <li class="menu-item ">
                   <a href="/users/agency" class="menu-link">
@@ -101,6 +109,46 @@
                   </li>
 
 
+   <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="APPS">APPS</span>
+
+
+                
+<li class="menu-item active">
+  <a href="javascript:void(0);" class="menu-link menu-toggle">
+    <i class="menu-icon tf-icons ti ti-refresh"></i>
+    <div data-i18n="Renewals">Renewals</div>
+  </a>
+  <ul class="menu-sub active">
+  <a href="/users/renewals/agency-upcoming-renewals" class="menu-link">
+          
+         <div data-i18n="Reviews">Reviews</div>
+           </a>
+                              </li>
+   </ul>
+</li>
+</li>
+
+      <li class="menu-item">
+  <a href="/users/licensed-agents" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-id"></i>
+    <div data-i18n="Licensee Details">Licensee Details</div>
+  </a>
+</li>
+                
+
+ <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="MARKETING">MARKETING</span>
+
+<li class="menu-item">
+  <a href="/users/renewals/message-center" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-speakerphone"></i> 
+    <div data-i18n="Message Center">Message Center</div>
+  </a>
+</li>
+
+
+
           <li class="menu-item">
          <a href="/users/gtidirectory" class="menu-link">
         <i class="menu-icon tf-icons ti ti-address-book"></i>
@@ -108,16 +156,7 @@
               </a>
                   </li>
 
-
-<!-- 
-                <li class="menu-item active ">
-            <a href="/users/renewals/agency-upcoming-renewals" class="menu-link">
-          <i class="menu-icon tf-icons ti ti-refresh"></i>
-         <div data-i18n="Reviews">Reviews</div>
-           </a>
-                              </li>
-
--->
+       
 
 <li class="menu-item">
   <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -135,26 +174,18 @@
         <div data-i18n="Renewals">Renewals</div>
       </a>
     </li>
-    <li class="menu-item">
-      <a href="/api/franchise/render" class="menu-link">
-        <div data-i18n="Franchise TV">Franchise TV</div>
-      </a>
-    </li>
+ <% if (user && user.location_type === 1) { %>
+  <li class="menu-item">
+    <a href="/api/franchise/render" class="menu-link">
+      <div data-i18n="Franchise TV">Franchise TV</div>
+    </a>
+  </li>
+<% } %>
   </ul>
 </li>
 
 
-
- <li class="menu-header small text-uppercase">
-            <span class="menu-header-text" data-i18n="MARKETING">MARKETING</span>
-
-<li class="menu-item">
-  <a href="/users/renewals/message-center" class="menu-link">
-    <i class="menu-icon tf-icons ti ti-speakerphone"></i> 
-    <div data-i18n="Message Center">Message Center</div>
-  </a>
-</li>
-
+ 
 
           <!-- ////////////////ADMIN/////////////////////// -->
  <% if (user && user.location_type === 1 && user.department && user.department.trim() === "Marketing & IT") { %>  
@@ -170,18 +201,25 @@
 <% } %>
 
 
+<li class="menu-item">
+  <a href="/users/codes" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-key"></i>
+    <div data-i18n="Carries Codes">Carries Codes</div>
+  </a>
+</li>
 
+      
 
 
 
            
-
 
         </ul>
 
       </aside>
 
       <!-- / Menu -->
+
       <div class="layout-page">
         <!-- Navbar -->
      
