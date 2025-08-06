@@ -82,22 +82,30 @@
         <div class="menu-inner-shadow"></div>
 
         <ul class="menu-inner py-1">
+     <!-- / Menu -->
+    
+        <!-- Dashboard -->
 
-              <!-- Dashboard -->
-
-          <li class="menu-item">
+          <li class="menu-item ">
             <a href="/users/dashboard" class="menu-link">
               <i class="menu-icon tf-icons ti ti-smart-home"></i>
               <div data-i18n="Dashboard">Dashboard</div>
             </a>
           </li>
 
-                    <li class="menu-item">
+         <li class="menu-item">
   <a href="/users/statistics/policies" class="menu-link">
     <i class="menu-icon tf-icons ti ti-chart-bar"></i>
     <div data-i18n="Stats">Stats</div>
   </a>
-</li>
+ </li>
+
+
+ <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="Sales">Sales</span>
+
+
+          
                           <li class="menu-item ">
                   <a href="/users/agency" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-home-heart"></i>
@@ -105,15 +113,45 @@
            </a>
                   </li>
 
-<!-- 
-                <li class="menu-item active">
-            <a href="/users/renewals/agency-upcoming-renewals" class="menu-link">
-          <i class="menu-icon tf-icons ti ti-refresh"></i>
+
+   <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="APPS">APPS</span>
+
+
+                
+<li class="menu-item">
+  <a href="javascript:void(0);" class="menu-link menu-toggle">
+    <i class="menu-icon tf-icons ti ti-refresh"></i>
+    <div data-i18n="Renewals">Renewals</div>
+  </a>
+  <ul class="menu-sub">
+  <a href="/users/renewals/agency-upcoming-renewals" class="menu-link">
+          
          <div data-i18n="Reviews">Reviews</div>
            </a>
                               </li>
+   </ul>
+</li>
+</li>
 
--->
+      <li class="menu-item">
+  <a href="/users/licensed-agents" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-id"></i>
+    <div data-i18n="Licensee Details">Licensee Details</div>
+  </a>
+</li>
+                
+
+ <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="MARKETING">MARKETING</span>
+
+<li class="menu-item">
+  <a href="/users/renewals/message-center" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-speakerphone"></i> 
+    <div data-i18n="Message Center">Message Center</div>
+  </a>
+</li>
+
 
 
           <li class="menu-item">
@@ -123,6 +161,7 @@
               </a>
                   </li>
 
+       
 
 <li class="menu-item">
   <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -151,23 +190,14 @@
 </li>
 
 
- <li class="menu-header small text-uppercase">
-            <span class="menu-header-text" data-i18n="MARKETING">MARKETING</span>
-
-<li class="menu-item">
-  <a href="/users/renewals/message-center" class="menu-link">
-    <i class="menu-icon tf-icons ti ti-speakerphone"></i> 
-    <div data-i18n="Message Center">Message Center</div>
-  </a>
-</li>
-
+ 
 
           <!-- ////////////////ADMIN/////////////////////// -->
  <% if (user && user.location_type === 1 && user.department && user.department.trim() === "Marketing & IT") { %>  
   <li class="menu-header small text-uppercase">
     <span class="menu-header-text" data-i18n="ADMIN">ADMIN</span>
   </li>
-  <li class="menu-item">
+  <li class="menu-item active">
     <a href="/users/config/headcarriers" class="menu-link">
       <i class="menu-icon tf-icons ti ti-settings-check"></i>
       <div data-i18n="Config">Config</div>
@@ -175,17 +205,26 @@
   </li>
 <% } %>
 
-    
+
+<li class="menu-item">
+  <a href="/users/codes" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-key"></i>
+    <div data-i18n="Carries Codes">Carries Codes</div>
+  </a>
+</li>
+
+      
+
 
 
            
-
 
         </ul>
 
       </aside>
 
       <!-- / Menu -->
+
 
       <!-- Layout page -->
       <div class="layout-page">

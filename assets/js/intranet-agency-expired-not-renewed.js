@@ -570,7 +570,7 @@ function attachDetailsButtonHandlers() {
   });
 }
 
-// Además, asegúrate de tener el cierre del modal con:
+// cierre del modal con:
 $(document).on('click', '#customerDetailsModal, .close-modal-bottom', function(e){
   if(e.target === this || $(e.target).hasClass('close-modal-bottom')) {
     $('#customerDetailsModal').fadeOut(220);

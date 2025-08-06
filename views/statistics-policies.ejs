@@ -73,6 +73,7 @@
     <script src="/vendor/js/template-customizer.js"></script>
     <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
     <script src="/js/config.js"></script>
+
 <style>
 
 /* Loader SweetAlert2 glass effect */
@@ -208,33 +209,30 @@ div.dt-button-collection .dt-button:hover {
           <div class="menu-inner-shadow"></div>
 
           <ul class="menu-inner py-1">
+     <!-- / Menu -->
+    
+        <!-- Dashboard -->
 
-            <!-- Dashboard -->
-            <li class="menu-item">
-              <a href="/users/dashboard" class="menu-link">
-                <i class="menu-icon tf-icons ti ti-smart-home"></i>
-                <div data-i18n="Dashboard">Dashboard</div>
-              </a>
-            </li>
+          <li class="menu-item ">
+            <a href="/users/dashboard" class="menu-link">
+              <i class="menu-icon tf-icons ti ti-smart-home"></i>
+              <div data-i18n="Dashboard">Dashboard</div>
+            </a>
+          </li>
 
-                                  <li class="menu-item active">
+         <li class="menu-item active">
   <a href="/users/statistics/policies" class="menu-link">
     <i class="menu-icon tf-icons ti ti-chart-bar"></i>
     <div data-i18n="Stats">Stats</div>
   </a>
-</li>
-
-            <% if(user.id_role == 5 || user.id_role == 6 || user.id_role == 9 || user.id_role == 7 || user.id_user == 161 || user.id_user == 163 || user.id_user == 35) {%>
-              <li class="menu-item">
-                <a href="/users/accounting/stm-commissions" class="menu-link">
-                  <i class="menu-icon tf-icons ti ti-coin"></i>
-                  <div data-i18n="Commissions">Commissions</div>
-                </a>
-              </li>
-            <%}%>
+ </li>
 
 
+ <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="Sales">Sales</span>
 
+
+          
                           <li class="menu-item ">
                   <a href="/users/agency" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-home-heart"></i>
@@ -243,32 +241,33 @@ div.dt-button-collection .dt-button:hover {
                   </li>
 
 
-          <li class="menu-item">
-         <a href="/users/gtidirectory" class="menu-link">
-        <i class="menu-icon tf-icons ti ti-address-book"></i>
-          <div data-i18n="GTI Directory">GTI Directory</div>
-              </a>
-                  </li>
+   <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="APPS">APPS</span>
 
+
+                
 <li class="menu-item">
   <a href="javascript:void(0);" class="menu-link menu-toggle">
-    <i class="menu-icon tf-icons ti ti-device-tv"></i>
-    <div data-i18n="TV">TV</div>
+    <i class="menu-icon tf-icons ti ti-refresh"></i>
+    <div data-i18n="Renewals">Renewals</div>
   </a>
   <ul class="menu-sub">
-    <li class="menu-item">
-      <a href="/televisor/totals" class="menu-link">
-        <div data-i18n="New Business ">New Business </div>
-      </a>
-    </li>
-    <li class="menu-item">
-      <a href="/televisor-renewed/totals" class="menu-link">
-        <div data-i18n="Renewals ">Renewals </div>
-      </a>
-    </li>
-  </ul>
+  <a href="/users/renewals/agency-upcoming-renewals" class="menu-link">
+          
+         <div data-i18n="Reviews">Reviews</div>
+           </a>
+                              </li>
+   </ul>
+</li>
 </li>
 
+      <li class="menu-item">
+  <a href="/users/licensed-agents" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-id"></i>
+    <div data-i18n="Licensee Details">Licensee Details</div>
+  </a>
+</li>
+                
 
  <li class="menu-header small text-uppercase">
             <span class="menu-header-text" data-i18n="MARKETING">MARKETING</span>
@@ -281,8 +280,46 @@ div.dt-button-collection .dt-button:hover {
 </li>
 
 
+
+          <li class="menu-item">
+         <a href="/users/gtidirectory" class="menu-link">
+        <i class="menu-icon tf-icons ti ti-address-book"></i>
+          <div data-i18n="GTI Directory">GTI Directory</div>
+              </a>
+                  </li>
+
+       
+
+<li class="menu-item">
+  <a href="javascript:void(0);" class="menu-link menu-toggle">
+    <i class="menu-icon tf-icons ti ti-device-tv"></i>
+    <div data-i18n="TV">TV</div>
+  </a>
+  <ul class="menu-sub">
+    <li class="menu-item">
+      <a href="/televisor/totals" class="menu-link">
+        <div data-i18n="New Business">New Business</div>
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="/televisor-renewed/totals" class="menu-link">
+        <div data-i18n="Renewals">Renewals</div>
+      </a>
+    </li>
+ <% if (user && user.location_type === 1) { %>
+  <li class="menu-item">
+    <a href="/api/franchise/render" class="menu-link">
+      <div data-i18n="Franchise TV">Franchise TV</div>
+    </a>
+  </li>
+<% } %>
+  </ul>
+</li>
+
+
+ 
+
           <!-- ////////////////ADMIN/////////////////////// -->
-           
  <% if (user && user.location_type === 1 && user.department && user.department.trim() === "Marketing & IT") { %>  
   <li class="menu-header small text-uppercase">
     <span class="menu-header-text" data-i18n="ADMIN">ADMIN</span>
@@ -294,7 +331,26 @@ div.dt-button-collection .dt-button:hover {
     </a>
   </li>
 <% } %>
-    
+
+
+<li class="menu-item">
+  <a href="/users/codes" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-key"></i>
+    <div data-i18n="Carries Codes">Carries Codes</div>
+  </a>
+</li>
+
+      
+
+
+
+           
+
+        </ul>
+
+      </aside>
+
+      <!-- / Menu -->
 
     
 
