@@ -4,6 +4,15 @@ import xlsx from "xlsx";
 import { parse } from "csv-parse/sync";
 import stringSimilarity from "string-similarity";
 
+// Utilidad para limpiar strings (mayúsculas, sin acentos, sin tabs/espacios excesivos)
+function cleanString(str) {
+  return String(str)
+    .toUpperCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // quita acentos
+    .replace(/[\s\t\r\n]+/g, " ") // reemplaza tabs/saltos por espacio
+    .trim();
+}
+
 // Render main Access Codes page (for /users/codes)
 export const renderCodesPage = async (req, res) => {
   try {
@@ -139,11 +148,10 @@ export const exportCsv = async (req, res) => {
   }
 };
 
-// Import Excel or CSV and upsert into admin.code (fuzzy alias match with qq.locations)
+// Import Excel or CSV and insert/update into admin.code (fuzzy alias match, upsert, cleaning inputs, disables missing codes)
 export const importCodes = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded." });
-    const user = req.user;
 
     let data = [];
     const isCsv =
@@ -162,61 +170,41 @@ export const importCodes = async (req, res) => {
       data = xlsx.utils.sheet_to_json(sheet);
     }
 
-    // --- PRELOAD ALIASES ---
-    let allAliases = [];
-    let allowedAlias = "";
-
-    if (user.location_type === 1) {
-      // Corporativo: puede importar para cualquier alias corporativo
-      const allAliasesRes = await pool.query(
-        "SELECT alias FROM qq.locations WHERE alias IS NOT NULL AND location_type = 1"
-      );
-      allAliases = allAliasesRes.rows.map(r => r.alias);
-    } else if (user.location_type === 2 || user.location_type === 4) {
-      // Franquicia: solo su propio alias (pero fuzzy matching igual)
-      const aliasRes = await pool.query(
-        "SELECT alias FROM qq.locations WHERE alias IS NOT NULL AND location_id = $1",
-        [user.location_id]
-      );
-      if (!aliasRes.rows.length) {
-        return res.status(400).json({ error: "Your agency alias was not found in the database." });
-      }
-      allowedAlias = aliasRes.rows[0].alias;
-      allAliases = [allowedAlias];
-    } else {
-      return res.status(400).json({ error: "Invalid user type for importing codes." });
-    }
+    // Preload all aliases from qq.locations, limpiar para matching
+    const allAliasesRes = await pool.query(
+      "SELECT alias FROM qq.locations WHERE alias IS NOT NULL"
+    );
+    const allAliases = allAliasesRes.rows.map(r => r.alias);
+    const allAliasesCleaned = allAliases.map(cleanString);
 
     function getBestAlias(input) {
       if (!input) return null;
-      // Bajar el umbral para aceptar errores graves de tipeo
-      const threshold = 0.5; // antes 0.7, ahora más flexible
-      const { bestMatch } = stringSimilarity.findBestMatch(input, allAliases);
-      if (bestMatch.rating >= threshold) return bestMatch.target;
+      const agencyClean = cleanString(input);
+      const threshold = 0.35; // umbral bajo
+      const { bestMatch } = stringSimilarity.findBestMatch(agencyClean, allAliasesCleaned);
+      if (bestMatch.rating >= threshold) {
+        const idx = allAliasesCleaned.indexOf(bestMatch.target);
+        return allAliases[idx];
+      }
       return null;
     }
 
     let inserted = 0, updated = 0, skipped = 0;
     let insertedRows = [], updatedRows = [], skippedRows = [];
+    // Guarda las combinaciones únicas importadas para el enabled=false
+    const importedKeys = new Set();
 
     for (const row of data) {
-      // -- Soportar encabezados flexibles --
-      const agencyRaw = String(
-        row["Group Name"] ||
+      const agencyRaw = row["Group Name"] ||
         row["Agency Description"] ||
         row["AGENCY DESCRIPTION"] ||
         row["Group"] ||
         row["AGENCY"] ||
         row["agency"] ||
-        ""
-      ).trim();
-
-      let agency = getBestAlias(agencyRaw);
-
-      // Si es franquicia, SIEMPRE fuerza a usar el alias correcto (el de la DB, no el del CSV)
-      if ((user.location_type === 2 || user.location_type === 4)) {
-        agency = allowedAlias;
-      }
+        row["Agencia"] ||
+        row["AGENCIA"] ||
+        "";
+      const agency = getBestAlias(agencyRaw);
 
       if (!agency) {
         skipped++;
@@ -226,15 +214,15 @@ export const importCodes = async (req, res) => {
           code: row["Agency Code"] || row["CODE"] || "",
           login: row["User Name"] || row["LOGIN"] || "",
           password: row["Password"] || row["PASSWORD"] || "",
-          reason: "Agency alias not found or not similar enough"
+          reason: "Agency fuzzy match not found"
         });
         continue;
       }
 
-      const company = String(row["Service Provider"] || row["COMPANY"] || row["company"] || "").trim();
-      const code = String(row["Agency Code"] || row["CODE"] || row["code"] || "").trim();
-      const login = String(row["User Name"] || row["LOGIN"] || row["login"] || "").trim();
-      const password = String(row["Password"] || row["PASSWORD"] || row["password"] || "").trim();
+      const company = cleanString(row["Service Provider"] || row["COMPANY"] || row["company"] || "");
+      const code = cleanString(row["Agency Code"] || row["CODE"] || row["code"] || "");
+      const login = cleanString(row["User Name"] || row["LOGIN"] || row["login"] || "");
+      const password = cleanString(row["Password"] || row["PASSWORD"] || row["password"] || "");
 
       if (![agency, company, code, login, password].every(Boolean)) {
         skipped++;
@@ -242,34 +230,45 @@ export const importCodes = async (req, res) => {
         continue;
       }
 
-      // Check if record exists
-      const prevQuery = await pool.query(
-        `SELECT login, password FROM admin.code WHERE agency = $1 AND company = $2 AND code = $3`,
-        [agency, company, code]
-      );
-      const prev = prevQuery.rows[0];
+      // Guarda la key para enabled=false posterior
+      importedKeys.add(`${agency}|||${company}|||${code}`);
 
-      if (prev) {
-        if (prev.login === login && prev.password === password) {
-          skipped++;
-          skippedRows.push({ agency, company, code, login, password, reason: "No changes" });
-          continue;
-        }
-        await pool.query(
-          `UPDATE admin.code SET login = $4, password = $5 WHERE agency = $1 AND company = $2 AND code = $3`,
-          [agency, company, code, login, password]
-        );
-        updated++;
-        updatedRows.push({ agency, company, code, login, password });
-      } else {
-        await pool.query(
-          `INSERT INTO admin.code (agency, company, code, login, password)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [agency, company, code, login, password]
-        );
+      // UPSERT: insert or update if PK exists, y siempre enabled=true
+      const result = await pool.query(
+        `INSERT INTO admin.code (agency, company, code, login, password, enabled)
+         VALUES ($1, $2, $3, $4, $5, true)
+         ON CONFLICT (agency, company, code)
+         DO UPDATE SET login = EXCLUDED.login, password = EXCLUDED.password, enabled = true
+         RETURNING xmax = 0 AS inserted`,
+        [agency, company, code, login, password]
+      );
+      if (result.rows[0].inserted) {
         inserted++;
         insertedRows.push({ agency, company, code, login, password });
+      } else {
+        updated++;
+        updatedRows.push({ agency, company, code, login, password });
       }
+    }
+
+    // Desactiva todos los códigos que NO estén en el archivo importado (enabled=false)
+    const existing = await pool.query("SELECT agency, company, code FROM admin.code WHERE enabled = true");
+    for (const row of existing.rows) {
+      const key = `${row.agency}|||${row.company}|||${row.code}`;
+      if (!importedKeys.has(key)) {
+        await pool.query(
+          `UPDATE admin.code SET enabled = false WHERE agency = $1 AND company = $2 AND code = $3`,
+          [row.agency, row.company, row.code]
+        );
+      }
+    }
+
+    // Diagnóstico
+    console.log("Insertados:", inserted);
+    console.log("Actualizados:", updated);
+    console.log("Saltados:", skipped);
+    if (skipped > 0) {
+      console.log("Primeros 5 saltados:", skippedRows.slice(0, 5));
     }
 
     res.json({
@@ -280,7 +279,7 @@ export const importCodes = async (req, res) => {
       insertedRows,
       updatedRows,
       skippedRows,
-      message: "Import completed.",
+      message: "Import completed with fuzzy agency matching and upsert. Old codes not in the file were disabled.",
     });
   } catch (err) {
     console.error("IMPORT ERROR:", err);

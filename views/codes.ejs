@@ -62,47 +62,148 @@
   </script>
 
 
-</head>
+
 
 <style>
-/* Encabezado de la tabla centrado y claro */
+/* ==== ESTILO SOLO PARA LOS FILTROS DE AGENCIA Y COMPAÑÍA ==== */
+
+#filter-agency.selectpicker,
+#filter-company.selectpicker,
+#filter-agency + .bootstrap-select .dropdown-toggle,
+#filter-company + .bootstrap-select .dropdown-toggle {
+  background: #f3f6ff;
+  color: #344366;
+  border: 1.5px solid #c5d0e6;
+  font-weight: 500;
+  font-size: 1rem;
+  border-radius: 0.45rem;
+  min-height: 42px;
+  padding: 0.45rem 1.2rem 0.45rem 1.1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: none !important;
+}
+#filter-agency + .bootstrap-select .dropdown-toggle:focus,
+#filter-agency + .bootstrap-select .dropdown-toggle:hover,
+#filter-company + .bootstrap-select .dropdown-toggle:focus,
+#filter-company + .bootstrap-select .dropdown-toggle:hover,
+#filter-agency + .bootstrap-select .dropdown-toggle[aria-expanded="true"],
+#filter-company + .bootstrap-select .dropdown-toggle[aria-expanded="true"] {
+  border-color: #5370f0;
+  background: #eaf0ff;
+  color: #344366;
+  box-shadow: 0 0 0 2px #a2bbff42;
+}
+#filter-agency + .bootstrap-select .dropdown-toggle .filter-option,
+#filter-company + .bootstrap-select .dropdown-toggle .filter-option {
+  color: #344366;
+  font-weight: 500;
+  font-size: 1rem;
+}
+#filter-agency + .bootstrap-select .dropdown-toggle .filter-option .placeholder,
+#filter-company + .bootstrap-select .dropdown-toggle .filter-option .placeholder {
+  color: #a6b0c8;
+  font-weight: 400;
+}
+#filter-agency + .bootstrap-select .dropdown-menu,
+#filter-company + .bootstrap-select .dropdown-menu {
+  border-radius: 0.45rem;
+  border: 1.5px solid #c5d0e6;
+  box-shadow: 0 2px 24px 0 #1e22360f;
+  font-size: 1rem;
+  background: #fff;
+  min-width: 220px;
+  animation: fadeInDropdown 0.19s ease;
+}
+@keyframes fadeInDropdown {
+  from { opacity: 0; transform: translateY(8px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+#filter-agency + .bootstrap-select .dropdown-menu li a,
+#filter-company + .bootstrap-select .dropdown-menu li a {
+  color: #344366;
+  font-weight: 500;
+  padding: 0.55rem 1.1rem;
+  transition: background 0.18s, color 0.18s;
+}
+#filter-agency + .bootstrap-select .dropdown-menu li.active > a,
+#filter-agency + .bootstrap-select .dropdown-menu li a:hover,
+#filter-agency + .bootstrap-select .dropdown-menu li a:focus,
+#filter-company + .bootstrap-select .dropdown-menu li.active > a,
+#filter-company + .bootstrap-select .dropdown-menu li a:hover,
+#filter-company + .bootstrap-select .dropdown-menu li a:focus {
+  background: #5370f0 !important;
+  color: #fff !important;
+}
+#filter-agency + .bootstrap-select .dropdown-menu .selected span.check-mark,
+#filter-company + .bootstrap-select .dropdown-menu .selected span.check-mark {
+  color: #5370f0;
+}
+#filter-agency + .bootstrap-select .dropdown-menu li.active > a .text,
+#filter-agency + .bootstrap-select .dropdown-menu li.selected > a .text,
+#filter-company + .bootstrap-select .dropdown-menu li.active > a .text,
+#filter-company + .bootstrap-select .dropdown-menu li.selected > a .text {
+  font-weight: 600;
+}
+#filter-agency + .bootstrap-select .dropdown-menu .bs-searchbox input.form-control,
+#filter-company + .bootstrap-select .dropdown-menu .bs-searchbox input.form-control {
+  border-radius: 0.45rem;
+  border: 1.5px solid #c5d0e6;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.4rem 1rem;
+  margin-bottom: 0.5rem;
+  color: #344366;
+  background: #f3f6ff;
+}
+#filter-agency + .bootstrap-select .dropdown-menu .bs-searchbox input:focus,
+#filter-company + .bootstrap-select .dropdown-menu .bs-searchbox input:focus {
+  border-color: #5370f0;
+  box-shadow: 0 0 0 2px #a2bbff42;
+}
+#filter-agency-label,
+#filter-company-label {
+  color: #344366;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+  letter-spacing: 0.01em;
+}
+
+/* ========== ESTILOS DE TABLA ========== */
 #codes-table thead th {
   text-align: center !important;
   vertical-align: middle;
-  font-size: 1.00rem;
+  font-size: 1.07rem;
   font-weight: bold;
   letter-spacing: 0.03em;
-  border-bottom: 2px solid #dee2e6;
-  background: none !important;
-  color: inherit !important;
+  border-bottom: 2px solid var(--bs-border-color, #dee2e6);
+  background: var(--bs-table-bg, #f7f9fb) !important;
+  color: var(--bs-heading-color, #26304b) !important;
   backdrop-filter: none;
 }
-
-/* El resto de la tabla y controles sin colores ni fondos extra */
-.dataTables_length,
-.dataTables_length label,
-.dataTables_info,
-.dataTables_paginate .pagination,
-.dataTables_paginate .paginate_button {
-  background: none !important;
-  color: inherit !important;
+#codes-table, .card-datatable {
+  background: var(--bs-body-bg, #fff) !important;
+  border-radius: 1.1rem !important;
+  box-shadow: 0 4px 14px rgba(44, 62, 80, 0.06) !important;
   border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: initial !important;
-  font-size: inherit !important;
-  font-weight: inherit !important;
-  margin: initial !important;
-  gap: initial !important;
-  min-width: initial !important;
-  transition: none !important;
 }
-
-/* --- SOLO el select del length menu con estilo moderno --- */
+#codes-table td, #codes-table th {
+  vertical-align: middle !important;
+  padding-top: .5rem !important;
+  padding-bottom: .5rem !important;
+  border-color: var(--bs-border-color, #e6e9ef) !important;
+}
+#codes-table tbody tr {
+  border-left: 4px solid var(--bs-primary, #5867dd) !important;
+  background: var(--bs-table-bg, #fafbfc) !important;
+  transition: background 0.14s, border-color 0.18s;
+}
+#codes-table tbody tr:hover {
+  background: var(--bs-table-hover-bg, #e9eef6) !important;
+  border-left: 4px solid var(--bs-primary, #3b4cca) !important;
+}
 .dataTables_length select {
-
-  border: 1.5px solid #d7dbe7 !important;
-  
+  border: 1.5px solid var(--bs-border-color, #d7dbe7) !important;
   border-radius: 0.5rem !important;
   min-width: 64px !important;
   padding: 0.34rem 2.1rem 0.34rem 0.7rem !important;
@@ -110,8 +211,6 @@
   font-weight: 500 !important;
   box-shadow: 0 2px 7px rgba(40,48,70,0.06) !important;
   appearance: none !important;
-  -webkit-appearance: none !important;
-  -moz-appearance: none !important;
   background-image: url('data:image/svg+xml;utf8,<svg fill="gray" height="18" width="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>') !important;
   background-repeat: no-repeat !important;
   background-position: right 0.9rem center !important;
@@ -119,24 +218,19 @@
   cursor: pointer !important;
   transition: border-color 0.18s, background 0.18s !important;
 }
-
-.dataTables_length select:focus {
-
-  outline: none !important;
-}
-
-/* Opcional: spacing y alineación del label */
 .dataTables_length label {
   display: flex !important;
   align-items: center !important;
   gap: 0.4rem !important;
   font-size: 1rem !important;
   font-weight: 500 !important;
-  color: inherit !important;
+  color: var(--bs-secondary-color, #4d587b) !important;
   margin-bottom: 0 !important;
 }
-
-/* Opcional: mantiene los números de paginación pegados y bonitos */
+.dataTables_info {
+  color: var(--bs-secondary-color, #6c7b99) !important;
+  font-size: 0.99rem !important;
+}
 .dataTables_paginate .pagination {
   justify-content: center;
   margin-top: 0.4rem !important;
@@ -146,13 +240,15 @@
   margin: 0 2px !important;
   padding: 0.15rem 0.5rem !important;
   border-radius: 0.375rem !important;
+  color: var(--bs-secondary-color, #4d587b) !important;
+  border: none !important;
+  background: none !important;
 }
 .dataTables_paginate .paginate_button.current,
 .dataTables_paginate .paginate_button:hover {
-  color: inherit !important;
+  background: var(--bs-table-hover-bg, #e9eef6) !important;
+  color: var(--bs-primary, #26304b) !important;
 }
-
-/* Responsive para móviles */
 @media (max-width: 576px) {
   .dataTables_length,
   .dataTables_info {
@@ -164,7 +260,138 @@
     gap: 0.05rem !important;
   }
 }
+
+/* ===========================
+   Filtros Agencia y Compañía modernos
+   =========================== */
+.filter-label {
+  display: block;
+  color: var(--bs-heading-color, #26304b);
+  font-size: 1.04rem;
+  font-weight: 600;
+  margin-bottom: 0.22rem;
+  letter-spacing: 0.01em;
+}
+
+#filter-agency + .bootstrap-select .dropdown-toggle,
+#filter-company + .bootstrap-select .dropdown-toggle {
+  background: var(--bs-body-bg, #fff) !important;
+  color: var(--bs-heading-color, #26304b) !important;
+  border: 1.5px solid var(--bs-border-color, #d7dbe7) !important;
+  border-radius: 0.5rem !important;
+  font-weight: 500;
+  font-size: 1.06rem;
+  min-height: 43px;
+  box-shadow: 0 1px 7px rgba(40,48,70,0.05);
+  padding: 0.44rem 1.1rem 0.44rem 1.08rem;
+  transition: border-color 0.18s, background 0.18s;
+}
+
+#filter-agency + .bootstrap-select .dropdown-toggle:focus,
+#filter-agency + .bootstrap-select .dropdown-toggle:hover,
+#filter-company + .bootstrap-select .dropdown-toggle:focus,
+#filter-company + .bootstrap-select .dropdown-toggle:hover,
+#filter-agency + .bootstrap-select .dropdown-toggle[aria-expanded="true"],
+#filter-company + .bootstrap-select .dropdown-toggle[aria-expanded="true"] {
+  border-color: var(--bs-primary, #5370f0) !important;
+  background: var(--bs-table-bg, #f7f9fb) !important;
+  color: var(--bs-heading-color, #26304b) !important;
+  box-shadow: 0 0 0 2px #a2bbff42;
+}
+
+#filter-agency + .bootstrap-select .dropdown-toggle .filter-option,
+#filter-company + .bootstrap-select .dropdown-toggle .filter-option {
+  color: var(--bs-heading-color, #26304b) !important;
+  font-weight: 500;
+  font-size: 1.06rem;
+}
+
+#filter-agency + .bootstrap-select .dropdown-toggle .filter-option .placeholder,
+#filter-company + .bootstrap-select .dropdown-toggle .filter-option .placeholder {
+  color: #b6bdd5 !important;
+  font-weight: 400;
+}
+
+/* Dropdown */
+#filter-agency + .bootstrap-select .dropdown-menu,
+#filter-company + .bootstrap-select .dropdown-menu {
+  border-radius: 0.5rem !important;
+  border: 1.5px solid var(--bs-border-color, #d7dbe7) !important;
+  box-shadow: 0 4px 16px 0 #1e22360a;
+  font-size: 1.06rem;
+  background: var(--bs-body-bg, #fff);
+  min-width: 220px;
+  animation: fadeInDropdown 0.19s ease;
+}
+@keyframes fadeInDropdown {
+  from { opacity: 0; transform: translateY(8px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+#filter-agency + .bootstrap-select .dropdown-menu li a,
+#filter-company + .bootstrap-select .dropdown-menu li a {
+  color: var(--bs-heading-color, #26304b);
+  font-weight: 500;
+  padding: 0.55rem 1.1rem;
+  transition: background 0.18s, color 0.18s;
+}
+#filter-agency + .bootstrap-select .dropdown-menu li.active > a,
+#filter-agency + .bootstrap-select .dropdown-menu li a:hover,
+#filter-agency + .bootstrap-select .dropdown-menu li a:focus,
+#filter-company + .bootstrap-select .dropdown-menu li.active > a,
+#filter-company + .bootstrap-select .dropdown-menu li a:hover,
+#filter-company + .bootstrap-select .dropdown-menu li a:focus {
+  background: var(--bs-primary, #5370f0) !important;
+  color: #fff !important;
+}
+#filter-agency + .bootstrap-select .dropdown-menu .selected span.check-mark,
+#filter-company + .bootstrap-select .dropdown-menu .selected span.check-mark {
+  color: var(--bs-primary, #5370f0);
+}
+#filter-agency + .bootstrap-select .dropdown-menu li.active > a .text,
+#filter-agency + .bootstrap-select .dropdown-menu li.selected > a .text,
+#filter-company + .bootstrap-select .dropdown-menu li.active > a .text,
+#filter-company + .bootstrap-select .dropdown-menu li.selected > a .text {
+  font-weight: 600;
+}
+/* Buscador dentro del selectpicker */
+#filter-agency + .bootstrap-select .dropdown-menu .bs-searchbox input.form-control,
+#filter-company + .bootstrap-select .dropdown-menu .bs-searchbox input.form-control {
+  border-radius: 0.5rem;
+  border: 1.5px solid var(--bs-border-color, #d7dbe7);
+  font-size: 1.06rem;
+  font-weight: 500;
+  padding: 0.4rem 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--bs-heading-color, #26304b);
+  background: var(--bs-table-bg, #f7f9fb);
+}
+#filter-agency + .bootstrap-select .dropdown-menu .bs-searchbox input:focus,
+#filter-company + .bootstrap-select .dropdown-menu .bs-searchbox input:focus {
+  border-color: var(--bs-primary, #5370f0);
+  box-shadow: 0 0 0 2px #a2bbff42;
+}
+
+/* Responsivo */
+@media (max-width: 576px) {
+  #filter-agency + .bootstrap-select .dropdown-toggle,
+  #filter-company + .bootstrap-select .dropdown-toggle {
+    font-size: 1rem;
+    min-height: 39px;
+    padding: 0.36rem 0.8rem 0.36rem 0.9rem;
+  }
+  #filter-agency + .bootstrap-select .dropdown-menu,
+  #filter-company + .bootstrap-select .dropdown-menu {
+    font-size: 1rem;
+    min-width: 160px;
+  }
+}
 </style>
+
+
+
+</head>
+
+
 
 <body>
 
@@ -471,21 +698,22 @@
           <% if (user.location_type === 1) { %>
             <!-- CORPORATE: Agency select filter -->
             <div class="col-12 col-md-6 col-lg-3" id="agency-selector-col">
-              <label for="filter-agency" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
-                <i class="ti ti-building text-primary"></i> Agency
+              <label for="filter-agency" class="filter-label">
+                <i class="bi bi-building text-primary"></i> Agency
               </label>
-              <select id="filter-agency" class="selectpicker w-100"
-                data-style="btn-outline-secondary"
-                title="Select agency"
-                name="agency">
+              <select id="filter-agency"
+                      class="selectpicker w-100"
+                      data-live-search="true"
+                      title="Select Agency"
+                      name="agency">
                 <!-- Options rendered by JS -->
               </select>
             </div>
           <% } else if (user.location_type === 2 || user.location_type === 4) { %>
             <!-- FRANCHISE: Show alias only (not a select) -->
             <div class="col-12 col-md-6 col-lg-3" id="agency-alias-display">
-              <label class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
-                <i class="ti ti-building text-primary"></i> Agency
+              <label class="filter-label">
+                <i class="bi bi-building text-primary"></i> Agency
               </label>
               <div class="form-control-plaintext fw-bold ps-2">
                 <%= user.agency_alias %>
@@ -495,43 +723,40 @@
           <% } %>
 
           <div class="col-12 col-md-6 col-lg-3">
-            <label for="filter-company" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
-              <i class="ti ti-businessplan text-info"></i> Company
+            <label for="filter-company" class="filter-label">
+              <i class="bi bi-briefcase text-info"></i> Company
             </label>
-            <select id="filter-company" class="selectpicker w-100"
-              data-style="btn-outline-secondary"
-              title="Select company"
-              name="company">
+            <select id="filter-company"
+                    class="selectpicker w-100"
+                    data-live-search="true"
+                    title="Select Company"
+                    name="company">
               <!-- Options rendered by JS -->
             </select>
           </div>
           <div class="col-12 col-md-6 col-lg-6 d-flex flex-column flex-sm-row gap-2 justify-content-end align-items-sm-center">
-                <!-- botón para restablecer filtros -->
-            <button type="button" class="btn btn-outline-secondary ms-2" id="reset-filters-btn">
+            <button type="button" class="btn btn-outline-secondary" id="reset-filters-btn">
               <i class="bi bi-arrow-clockwise"></i> Reset Filters
             </button>
-         
             <button type="button" class="btn btn-outline-primary fw-semibold px-4" id="export-btn">
               <i class="bi bi-download"></i> Export CSV
             </button>
-            <!-- Import Excel block -->
-            <input type="file" class="custom-file-input form-control border border-primary-subtle shadow-none"
-                   id="excel-input" name="file" accept=".xlsx,.xls,.csv" style="display:none;">
-            <button type="button" class="btn btn-outline-success fw-semibold ms-2 px-4" id="import-btn">
-              <i class="bi bi-upload"></i>  Import
+            <input type="file" class="d-none" id="excel-input" name="file" accept=".xlsx,.xls,.csv">
+            <button type="button" class="btn btn-outline-success fw-semibold px-4" id="import-btn">
+              <i class="bi bi-upload"></i> Import
             </button>
-         </div>
+          </div>
         </div>
       </form>
       <div id="import-result" class="mb-3 fs-6"></div>
-      <div class="card mt-4">
+      <div class="card mt-4 shadow-sm border-0">
         <div class="card-datatable table-responsive">
-          <table class="table datatables-access-codes table-bordered table-hover align-middle shadow-sm" id="codes-table"
+          <table class="table table-bordered table-hover align-middle shadow-sm rounded" id="codes-table"
                  aria-describedby="codes-table-description">
             <caption id="codes-table-description" class="visually-hidden">
               Table of agency/company codes, logins and passwords.
             </caption>
-            <thead>
+            <thead class="table-light">
               <tr>
                 <th class="text-nowrap" scope="col">AGENCY</th>
                 <th class="text-nowrap" scope="col">COMPANY</th>
@@ -550,6 +775,8 @@
   </div>
 </div>
 <!-- END MAIN CONTENT -->
+
+
       </div>
     </div>
   </div>
