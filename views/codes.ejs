@@ -64,6 +64,7 @@
 
 
 
+
 <style>
 /* ==== ESTILO SOLO PARA LOS FILTROS DE AGENCIA Y COMPAÑÍA ==== */
 
@@ -243,10 +244,15 @@
   color: var(--bs-secondary-color, #4d587b) !important;
   border: none !important;
   background: none !important;
+  box-shadow: none !important;
 }
 .dataTables_paginate .paginate_button.current,
-.dataTables_paginate .paginate_button:hover {
-  background: var(--bs-table-hover-bg, #e9eef6) !important;
+.dataTables_paginate .paginate_button:hover,
+.dataTables_paginate .paginate_button:focus,
+.dataTables_paginate .paginate_button:active {
+  background: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
   color: var(--bs-primary, #26304b) !important;
 }
 @media (max-width: 576px) {
@@ -385,8 +391,18 @@
     min-width: 160px;
   }
 }
-</style>
 
+/* Quitar fondo y sombra en todos los estados de paginación */
+.dataTables_paginate .paginate_button,
+.dataTables_paginate .paginate_button.current,
+.dataTables_paginate .paginate_button:hover,
+.dataTables_paginate .paginate_button:focus,
+.dataTables_paginate .paginate_button:active {
+  background: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+</style>
 
 
 </head>
@@ -456,20 +472,14 @@
 
 
                 
+                
 <li class="menu-item">
-  <a href="javascript:void(0);" class="menu-link menu-toggle">
-    <i class="menu-icon tf-icons ti ti-refresh"></i>
+  <a href="/users/renewals/agency-upcoming-renewals" class="menu-link">
+    <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
     <div data-i18n="Renewals">Renewals</div>
   </a>
-  <ul class="menu-sub">
-  <a href="/users/renewals/agency-upcoming-renewals" class="menu-link">
-          
-         <div data-i18n="Reviews">Reviews</div>
-           </a>
-                              </li>
-   </ul>
 </li>
-</li>
+
 
       <li class="menu-item">
   <a href="/users/licensed-agents" class="menu-link">
@@ -540,7 +550,7 @@
       <div data-i18n="Config">Config</div>
     </a>
   </li>
-<% } %>
+
 
 
 <li class="menu-item active">
@@ -550,7 +560,7 @@
   </a>
 </li>
 
-      
+     <% } %> 
 
 
 
