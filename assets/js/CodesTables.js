@@ -5,6 +5,20 @@ $(document).ready(function () {
   const agenciesMap = window.AGENCIES_MAP || {};
   let codesData = [];
 
+  // Robust deduplication
+  function uniqueNormalized(arr) {
+    const map = new Map();
+    arr.forEach(item => {
+      if (!item) return;
+      const norm = (item || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+      if (!map.has(norm)) map.set(norm, item.trim());
+    });
+    return Array.from(map.values());
+  }
+
   function getAvatarImg(name, type = "agency") {
     const safeName = (name || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
     const initials = (name || "").split(' ').map(x => x[0]).join('').toUpperCase().substring(0, 2);
@@ -20,12 +34,44 @@ $(document).ready(function () {
     `;
   }
 
-  // Si usas selectpicker, refresca. Si no, puedes quitar esto.
-  if ($.fn.selectpicker) {
-    $('.selectpicker').selectpicker('refresh');
+  // Initialize selectpicker just once
+  $('.selectpicker').selectpicker();
+function updateAgencyFilter(options, selected) {
+  const $agency = $('#filter-agency');
+  if ($agency.hasClass('selectpicker')) $agency.selectpicker('destroy');
+  $agency.empty();
+  // agrega solo las opciones reales
+  const items = uniqueNormalized(options);
+  items.forEach(agency => {
+    $agency.append(`<option value="${agency}">${agency}</option>`);
+  });
+  $agency.selectpicker(); // vuelve a inicializar
+  if (items.length === 1) {
+    $agency.selectpicker('val', items[0]);
+  } else if (selected) {
+    $agency.selectpicker('val', selected);
+  } else {
+    $agency.selectpicker('val', ''); // muestra el placeholder del title
   }
+}
 
-  // DataTable setup
+function updateCompanyFilter(options, selected) {
+  const $company = $('#filter-company');
+  if ($company.hasClass('selectpicker')) $company.selectpicker('destroy');
+  $company.empty();
+  const items = uniqueNormalized(options);
+  items.forEach(company => {
+    $company.append(`<option value="${company}">${company}</option>`);
+  });
+  $company.selectpicker();
+  if (items.length === 1) {
+    $company.selectpicker('val', items[0]);
+  } else if (selected) {
+    $company.selectpicker('val', selected);
+  } else {
+    $company.selectpicker('val', '');
+  }
+}
   const $codesTable = $('#codes-table');
   const dt = $codesTable.DataTable({
     columns: [
@@ -56,38 +102,11 @@ $(document).ready(function () {
     return false;
   }
 
-  // Opciones de filtros
-  function updateAgencyFilter(options, selected) {
-    const $agency = $('#filter-agency');
-    $agency.empty();
-    $agency.append('<option value="">Select Agency</option>');
-    options.forEach(agency => {
-      $agency.append(`<option value="${agency}">${agency}</option>`);
-    });
-    // Si usas selectpicker
-    if ($agency.hasClass('selectpicker')) $agency.selectpicker('refresh');
-    $agency.val(selected || "");
-    if ($agency.hasClass('selectpicker')) $agency.selectpicker('val', selected || "");
-  }
-  
-  function updateCompanyFilter(options, selected) {
-    const $company = $('#filter-company');
-    $company.empty();
-    $company.append('<option value="">Select Company</option>');
-    options.forEach(company => {
-      $company.append(`<option value="${company}">${company}</option>`);
-    });
-    if ($company.hasClass('selectpicker')) $company.selectpicker('refresh');
-    $company.val(selected || "");
-    if ($company.hasClass('selectpicker')) $company.selectpicker('val', selected || "");
-  }
-
-  // FILTRADO ESTRICTO: SOLO muestra lo seleccionado
   function filterAndRedraw(selectedAgency, selectedCompany) {
     let filterByAgency = (locationType === 1);
     let filtered = codesData.filter(row =>
-      (!filterByAgency || !selectedAgency || row.agency === selectedAgency) && // solo esa agencia si la eliges
-      (!selectedCompany || row.company === selectedCompany) && // solo esa compañía si la eliges
+      (!filterByAgency || !selectedAgency || row.agency === selectedAgency) &&
+      (!selectedCompany || row.company === selectedCompany) &&
       isAgencyRelevant(row.agency)
     );
     dt.clear();
@@ -95,7 +114,6 @@ $(document).ready(function () {
     dt.draw();
   }
 
-  // Eventos de filtro
   $('#filter-agency').on('change', function () {
     if (locationType !== 1) return;
     let selectedAgency = $('#filter-agency').val();
@@ -117,7 +135,6 @@ $(document).ready(function () {
     filterAndRedraw("", "");
   });
 
-  // Carga inicial de datos y opciones
   async function fetchCodes() {
     try {
       let url = '/users/codes/api';
@@ -130,23 +147,24 @@ $(document).ready(function () {
         codesData = [];
       }
       dt.clear();
-      dt.rows.add(codesData.filter(row => isAgencyRelevant(row.agency)));
+      const visibleRows = codesData.filter(row => isAgencyRelevant(row.agency));
+      dt.rows.add(visibleRows);
       dt.draw();
 
-      // Opciones para filtros
-      let allAgencies = [...new Set(codesData.filter(r => isAgencyRelevant(r.agency)).map(r => r.agency).filter(Boolean))];
-      let allCompanies = [...new Set(codesData.map(r => r.company).filter(Boolean))];
+      // Deduplicate and refresh selects
+      let allAgencies = visibleRows.map(r => r.agency);
+      let allCompanies = visibleRows.map(r => r.company);
       updateAgencyFilter(allAgencies, "");
       updateCompanyFilter(allCompanies, "");
-      filterAndRedraw("", "");
     } catch (err) {
       codesData = [];
       dt.clear().draw();
       $('#import-result').css('color', 'red').text("JS Error: " + err.message);
+      updateAgencyFilter([], "");
+      updateCompanyFilter([], "");
     }
   }
 
-  // Botones extra
   $('#export-btn').on('click', function () {
     let url = '/users/codes/export';
     if (locationId) url += `?location_id=${locationId}`;
@@ -184,7 +202,6 @@ $(document).ready(function () {
         showModal('Import Error', data.error, 'error');
       } else {
         await fetchCodes();
-        // Opcional: mostrar mensaje de éxito
       }
     } catch (err) {
       showModal('Import Error', 'Unexpected error during import.', 'error');
