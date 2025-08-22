@@ -9,6 +9,8 @@
   <meta name="msapplication-TileColor" content="#ffffff">
   <meta name="msapplication-TileImage" content="/img/favicon/ms-icon-144x144.png">
   <meta name="theme-color" content="#ffffff">
+
+  <!-- Favicons -->
   <link rel="apple-touch-icon" sizes="57x57" href="/img/favicon/apple-icon-57x57.png">
   <link rel="apple-touch-icon" sizes="60x60" href="/img/favicon/apple-icon-60x60.png">
   <link rel="apple-touch-icon" sizes="72x72" href="/img/favicon/apple-icon-72x72.png">
@@ -34,12 +36,12 @@
   <link rel="stylesheet" href="/vendor/fonts/tabler-icons.css" />
   <link rel="stylesheet" href="/vendor/fonts/flag-icons.css" />
 
-  <!-- DataTables CSS -->
+  <!-- DataTables CSS (usa solo una fuente: vendor) -->
   <link rel="stylesheet" href="/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
   <link rel="stylesheet" href="/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
   <link rel="stylesheet" href="/vendor/libs/datatables-checkboxes-jquery/datatables.checkboxes.css" />
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css"/>
-  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css"/>
+  <!-- Opcional: Botones DataTables si usas Export -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css"/>
 
   <!-- Core & Page CSS -->
   <link rel="stylesheet" href="/vendor/css/rtl/core.css" class="template-customizer-core-css" />
@@ -54,72 +56,47 @@
   <link rel="stylesheet" href="/vendor/libs/apex-charts/apex-charts.css" />
   <link rel="stylesheet" href="/vendor/libs/swiper/swiper.css" />
 
-  <!-- Helpers & Config -->
+  <!-- Helpers & Config (OK en <head>) -->
   <script src="/vendor/js/helpers.js"></script>
   <script src="/vendor/js/template-customizer.js"></script>
   <script src="/js/config.js"></script>
 
-  <!-- JQuery & DataTables JS -->
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+  <!-- IMPORTANTE:
+       - NO cargar jQuery ni DataTables JS en el <head>.
+       - NO poner HTML (modals) dentro del <head>. Mueve el modal al <body>. -->
 
-  <!-- Modal Styles -->
-    <link rel="stylesheet" href="/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
-  <link rel="stylesheet" href="/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
-  <link rel="stylesheet" href="/vendor/libs/datatables-checkboxes-jquery/datatables.checkboxes.css" />
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css"/>
-  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css"/>
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-
-  
-    
-<div id="customerDetailsModal" tabindex="-1">
-  <div class="modal-content">
-    <div id="customerDetailsBody"></div>
-  </div>
-</div>
-
-<style>
-  
-#customerDetailsModal {
-  --bs-modal-bg: #07051a;
-  --bs-body-color: #bbb7b7;
-}
-
-#customerDetailsModal {
-  display: none; 
-  position: fixed; 
-  z-index: 9999; 
-  left: 0; top: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.35);
-  align-items: center; justify-content: center;
-}
-
-#customerDetailsModal .modal-content {
-  background-color: var(--bs-modal-bg);
-  color: var(--bs-body-color);
-  border-radius: 10px; 
-  padding: 24px 24px 16px 24px;
-  min-width: 320px; 
-  max-width: 90vw; 
-  width: 380px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.17);
-  position: relative;
-}
-
-#customerDetailsModal .close-modal {
-  position: absolute; right: 18px; top: 10px;
-  background: none; border: none; font-size: 22px;
-  color: #888; cursor: pointer;
-  line-height: 1;
-}
-@media (max-width: 500px) {
-  #customerDetailsModal .modal-content { min-width: 90vw; }
-}
-</style>
+  <!-- Estilos del modal (CSS sí puede ir en <head>) -->
+  <style>
+    #customerDetailsModal {
+      --bs-modal-bg: #07051a;
+      --bs-body-color: #bbb7b7;
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.35);
+      align-items: center; justify-content: center;
+    }
+    #customerDetailsModal .modal-content {
+      background-color: var(--bs-modal-bg);
+      color: var(--bs-body-color);
+      border-radius: 10px;
+      padding: 24px 24px 16px 24px;
+      min-width: 320px;
+      max-width: 90vw;
+      width: 380px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.17);
+      position: relative;
+    }
+    #customerDetailsModal .close-modal {
+      position: absolute; right: 18px; top: 10px;
+      background: none; border: none; font-size: 22px;
+      color: #888; cursor: pointer; line-height: 1;
+    }
+    @media (max-width: 500px) {
+      #customerDetailsModal .modal-content { min-width: 90vw; }
+    }
+  </style>
 </head>
 
 
@@ -145,14 +122,14 @@
 
         <div class="menu-inner-shadow"></div>
 
-        <ul class="menu-inner py-1">
+          <ul class="menu-inner py-1">
         
 
-     <!-- / Menu -->
+             <!-- / Menu -->
     
         <!-- Dashboard -->
 
-          <li class="menu-item ">
+          <li class="menu-item">
             <a href="/users/dashboard" class="menu-link">
               <i class="menu-icon tf-icons ti ti-smart-home"></i>
               <div data-i18n="Dashboard">Dashboard</div>
@@ -192,6 +169,8 @@
   </a>
 </li>
 
+
+
       <li class="menu-item">
   <a href="/users/licensed-agents" class="menu-link">
     <i class="menu-icon tf-icons ti ti-id"></i>
@@ -210,6 +189,7 @@
   </a>
 </li>
 
+   
 
 
           <li class="menu-item">
@@ -271,12 +251,43 @@
   </a>
 </li>
 
-     <% } %> 
+      
+<% } %>
+
+          
+ <%
+  const path = (typeof currentPath === 'string') ? currentPath : '';
+  const canSeeFK = (typeof canSeeFranchiseSection !== 'undefined')
+    ? canSeeFranchiseSection
+    : (user && (user.location_type === 1 || (user.department && user.department.trim() === 'Marketing & IT')));
+%>
+
+<% if (canSeeFK) { %>
+  <li class="menu-header small text-uppercase">
+    <span class="menu-header-text" data-i18n="FRANCHISE">FRANCHISE</span>
+  </li>
+
+  <li class="menu-item <%= path.startsWith('/franchise-kpis') ? 'active' : '' %>">
+    <a href="/franchise-kpis" class="menu-link">
+      <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
+      <div data-i18n="Renewals">Renewals</div>
+    </a>
+  </li>
 
 
 
-           
+  <li class="menu-item <%= path.startsWith('/franchise-errors') ? 'active' : '' %>">
+    <a href="/franchise-errors" class="menu-link">
+      <i class="menu-icon tf-icons ti ti-alert-triangle"></i>
+      <div data-i18n="Errors">Errors</div>
+    </a>
+  </li>
 
+
+
+
+
+   <% } %>  
         </ul>
 
       </aside>
@@ -426,13 +437,17 @@
 <!-- NAV PILLS -->
 <ul class="nav nav-pills flex-column flex-md-row mb-4 mx-2 mx-md-4">
   <li class="nav-item">
-    <a class="nav-link " href="/users/renewals/agency-upcoming-renewals">
+    <a
+      class="nav-link <%= (typeof activeTab !== 'undefined' && activeTab === 'upcoming') ? 'active' : '' %>"
+      href="/users/renewals/agency-upcoming-renewals<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>">
       <i class="ti ti-repeat ti-xs me-1"></i>
       Upcoming Renewals
     </a>
   </li>
-  <li class="nav-item">
-    <a class="nav-link active" href="/users/renewals/agency-expired-not-renewed">
+  <li class="nav-item ">
+    <a
+      class="nav-link active <%= (typeof activeTab !== 'undefined' && activeTab === 'expired') ? 'active' : '' %>"
+      href="/users/renewals/agency-expired-not-renewed<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>">
       <i class="ti ti-repeat-off ti-xs me-1"></i>
       Expired Not Renewed
     </a>
@@ -625,44 +640,50 @@
       </div>
       <!-- / Layout page -->
     </div>
+
     <!-- / Layout container -->
+
+
     <!-- Overlay -->
     <div class="layout-overlay layout-menu-toggle"></div>
     <div class="drag-target"></div>
   </div>
 
-  <!-- Core JS -->
+   <!-- Core JS -->
   <script src="/vendor/libs/jquery/jquery.js"></script>
   <script src="/vendor/libs/popper/popper.js"></script>
   <script src="/vendor/js/bootstrap.js"></script>
-  <script src="/vendor/libs/node-waves/node-waves.js"></script>
-  <script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
-  <script src="/vendor/libs/hammer/hammer.js"></script>
-  <script src="/vendor/libs/i18n/i18n.js"></script>
+
+  <!-- Typeahead ANTES de main.js -->
   <script src="/vendor/libs/typeahead-js/typeahead.js"></script>
-  <script src="/vendor/js/menu.js"></script>
-  <script src="/vendor/libs/moment/moment.js"></script>
-  <script src="/vendor/libs/datatables-bs5/datatables-bootstrap5.js"></script>
-  <script src="/vendor/libs/select2/select2.js"></script>
-  <script src="/vendor/libs/@form-validation/popular.js"></script>
-  <script src="/vendor/libs/@form-validation/bootstrap5.js"></script>
-  <script src="/vendor/libs/@form-validation/auto-focus.js"></script>
-  <script src="/vendor/libs/cleavejs/cleave.js"></script>
-  <script src="/vendor/libs/cleavejs/cleave-phone.js"></script>
-   <!-- jQuery -->
 
+  <!-- Evita crash si por alguna razón no se cargó el plugin -->
+  <script>
+    if (typeof window.jQuery !== 'undefined' && !$.fn.typeahead) {
+      $.fn.typeahead = function(){ console.warn('Typeahead no cargó, usando no-op'); return this; };
+    }
+  </script>
 
-  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-  <!-- Bootstrap Bundle (incluye Popper) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- DataTables JS -->
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-
-  <!-- Main JS -->
+  <!-- Main layout JS (el que te rompía) -->
   <script src="/js/main.js"></script>
-  <!-- Page JS -->
-  <script src="/assets/js/intranet-agency-expired-not-renewed.js"></script>
 
+  <!-- DataTables (usa la integración de vendor bs5) -->
+  <script src="/vendor/libs/datatables-bs5/datatables-bootstrap5.js"></script>
+  <!-- Si quieres mantener el menú Export, añade Buttons (CDN) -->
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+  <!-- Expón el override si lo necesitas (opcional) -->
+  <script>
+    window.locationOverride = <%= typeof locationId !== 'undefined' && locationId ? Number(locationId) : 'null' %>;
+  </script>
+
+  <!-- JS de esta página -->
+  <script src="/assets/js/intranet-agency-expired-not-renewed.js"></script>
 </body>
 </html>

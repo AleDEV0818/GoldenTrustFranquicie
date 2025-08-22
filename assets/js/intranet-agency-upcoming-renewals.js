@@ -554,30 +554,35 @@ $(function () {
   // --------- FETCH Y RENDER ---------
   const next3months = document.getElementById("next3months");
 
-  function fetchAndRender() {
-    const data = { month: next3months.value || 0 };
-    
-    fetch("/users/renewals/agency-upcoming-renewals/data", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-      credentials: "include"
-    })
-    .then(response => {
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      return response.json();
-    })
-    .then(data => {
-      console.log("Datos recibidos del backend:", data);
-      renderKpis(data);
-      renderTable(data.upcomingRenewals || []);
-    })
-    .catch(error => {
-      console.error("Error fetching data:", error);
-      alert("Error loading data: " + error.message);
-    });
-  }
+// ... archivo original ...
+// Reemplaza SOLO dentro de fetchAndRender(), al armar el body del fetch:
 
+function fetchAndRender() {
+  const data = { month: next3months.value || 0 };
+  if (typeof window.locationOverride === 'number') {
+    data.location = window.locationOverride;
+  }
+  
+  fetch("/users/renewals/agency-upcoming-renewals/data", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+    credentials: "include"
+  })
+  .then(response => {
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return response.json();
+  })
+  .then(data => {
+    console.log("Datos recibidos del backend:", data);
+    renderKpis(data);
+    renderTable(data.upcomingRenewals || []);
+  })
+  .catch(error => {
+    console.error("Error fetching data:", error);
+    alert("Error loading data: " + error.message);
+  });
+}
   function renderKpis(data) {
     console.log("Renderizando KPIs con datos:", data);
     

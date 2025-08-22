@@ -21,31 +21,20 @@ function toISODate(date) {
 function convertMoneyToNumber(moneyValue) {
   if (typeof moneyValue === 'number') return moneyValue;
   if (!moneyValue) return 0;
-  
   if (typeof moneyValue === 'string') {
     const numericPart = moneyValue.replace(/[^\d.]/g, '');
     const numberValue = parseFloat(numericPart);
     return isNaN(numberValue) ? 0 : numberValue;
   }
-  
   return 0;
 }
 
 //  CÁLCULO DE PORCENTAJES
 function calculatePercentages(pr, pl, totalPolicies) {
-  // Porcentaje de renovación real
   let percentRen = 0;
-  if (totalPolicies > 0) {
-    percentRen = (pr.policies / totalPolicies) * 100;
-  }
-
-  // Porcentaje máximo renovable
+  if (totalPolicies > 0) percentRen = (pr.policies / totalPolicies) * 100;
   let percentTkg = 100;
-  if (totalPolicies > 0) {
-    percentTkg = 100 - (pl.policies / totalPolicies) * 100;
-  }
-
-  // Redondear a 1 decimal
+  if (totalPolicies > 0) percentTkg = 100 - (pl.policies / totalPolicies) * 100;
   return {
     percentren: Math.round(percentRen * 10) / 10,
     percenttkg: Math.round(percentTkg * 10) / 10
@@ -70,7 +59,7 @@ async function getDatabaseTotals(monthEnd, locationId) {
 // ---- CONTROLADOR PARA LA VISTA SSR ----
 export const agencyUpcomingRenewalsView = async (req, res) => {
   try {
-    const locationId = req.user?.location_id;
+    const locationId = req.scope?.locationId || req.user?.location_id;
     if (!locationId) {
       return res.status(400).render('error', { 
         message: "Usuario sin ubicación definida", 
@@ -80,37 +69,25 @@ export const agencyUpcomingRenewalsView = async (req, res) => {
     
     const monthEnd = toISODate(getMonthEndDate(0));
     const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0); // Fijar a medianoche
+    todayDate.setHours(0, 0, 0, 0);
 
-    // 1) Obtener totales desde la base de datos
     const dbTotals = await getDatabaseTotals(monthEnd, locationId);
-    
-    // Convertir premium a número
     const urPremium = convertMoneyToNumber(dbTotals.premium);
-    
-    // 2) Obtener las pólizas individuales
+
     const policiesSql = `SELECT * FROM intranet.renewals_upcoming_details_front($1, $2)`;
     const policiesResult = await pool.query(policiesSql, [monthEnd, locationId]);
     const upcomingRenewals = policiesResult.rows || [];
 
-    // 3) Calcular KPIs manualmente
-    const ur = { 
-      premium: urPremium,
-      policies: dbTotals.policies 
-    };
-    
+    const ur = { premium: urPremium, policies: dbTotals.policies };
     const pr = { premium: 0, policies: 0 };
     const pl = { premium: 0, policies: 0 };
-    
-    // Arrays para sumas precisas
     const prPremiums = [];
     const plPremiums = [];
     
     for (const policy of upcomingRenewals) {
       const premium = convertMoneyToNumber(policy.premium);
       const expDate = new Date(policy.exp_date);
-      expDate.setHours(0, 0, 0, 0); // Fijar a medianoche para comparación
-      
+      expDate.setHours(0, 0, 0, 0);
       if (policy.renewed) {
         prPremiums.push(premium);
         pr.policies += 1;
@@ -120,24 +97,19 @@ export const agencyUpcomingRenewalsView = async (req, res) => {
       }
     }
 
-    // Calcular sumas con precisión
     pr.premium = preciseMoneySum(prPremiums);
     pl.premium = preciseMoneySum(plPremiums);
-
-    // 4) Calcular porcentajes
     const per = calculatePercentages(pr, pl, ur.policies);
 
-    // 5) Preparar datos para vista
     const data = {
-      ur,  // Total de la agencia (dbTotals)
-      pr,  // Renewed
-      pl,  // Lost
-      per, // Porcentajes
+      ur, pr, pl, per,
       upcomingRenewals: upcomingRenewals.map(policy => ({
         ...policy,
         premium: convertMoneyToNumber(policy.premium)
       })),
       nextMonths: getNextMonthsArray("en-US", 3),
+      locationId,
+      activeTab: 'upcoming',
       helpers: {
         formatDate: (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString() : '',
         getInitials: (name) => {
@@ -162,7 +134,8 @@ export const agencyUpcomingRenewalsView = async (req, res) => {
             maximumFractionDigits: 0
           }).format(value);
         }
-      }
+      },
+      user: req.user
     };
 
     res.render("agency-upcoming-renewals", data);
@@ -179,7 +152,7 @@ export const agencyUpcomingRenewalsView = async (req, res) => {
 // ---- CONTROLADOR PARA EL ENDPOINT JSON ----
 export const agencyUpcomingRenewalsData = async (req, res) => {
   try {
-    const locationId = req.user?.location_id;
+    const locationId = req.scope?.locationId || req.user?.location_id;
     if (!locationId) {
       return res.status(400).json({ error: "Usuario sin ubicación definida" });
     }
@@ -187,37 +160,25 @@ export const agencyUpcomingRenewalsData = async (req, res) => {
     const monthOffset = parseInt(req.body.month) || 0;
     const monthEnd = toISODate(getMonthEndDate(monthOffset));
     const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0); // Fijar a medianoche
+    todayDate.setHours(0, 0, 0, 0);
 
-    // 1) Obtener totales desde la base de datos
     const dbTotals = await getDatabaseTotals(monthEnd, locationId);
-    
-    // Convertir premium a número
     const urPremium = convertMoneyToNumber(dbTotals.premium);
 
-    // 2) Obtener las pólizas individuales
     const policiesSql = `SELECT * FROM intranet.renewals_upcoming_details_front($1, $2)`;
     const policiesResult = await pool.query(policiesSql, [monthEnd, locationId]);
     const upcomingRenewals = policiesResult.rows || [];
 
-    // 3) Calcular KPIs manualmente
-    const ur = { 
-      premium: urPremium,
-      policies: dbTotals.policies 
-    };
-    
+    const ur = { premium: urPremium, policies: dbTotals.policies };
     const pr = { premium: 0, policies: 0 };
     const pl = { premium: 0, policies: 0 };
-    
-    // Arrays para sumas precisas
     const prPremiums = [];
     const plPremiums = [];
     
     for (const policy of upcomingRenewals) {
       const premium = convertMoneyToNumber(policy.premium);
       const expDate = new Date(policy.exp_date);
-      expDate.setHours(0, 0, 0, 0); // Fijar a medianoche para comparación
-      
+      expDate.setHours(0, 0, 0, 0);
       if (policy.renewed) {
         prPremiums.push(premium);
         pr.policies += 1;
@@ -227,11 +188,8 @@ export const agencyUpcomingRenewalsData = async (req, res) => {
       }
     }
 
-    // Calcular sumas con precisión
     pr.premium = preciseMoneySum(prPremiums);
     pl.premium = preciseMoneySum(plPremiums);
-
-    // 4) Calcular porcentajes
     const per = calculatePercentages(pr, pl, ur.policies);
 
     res.json({

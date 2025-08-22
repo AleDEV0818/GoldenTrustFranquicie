@@ -15,9 +15,6 @@ import { pool } from "../config/dbConfig.js";
 const router = express.Router();
 
 // --- UTILIDADES DE FORMATO Y LIMPIEZA ---
-/**
- * Formatea un monto como moneda natural (ej: $1,234,567)
- */
 function formatNaturalCurrency(amount) {
   if (amount == null) return '$0';
   if (typeof amount === 'object' && amount !== null && 'toString' in amount) {
@@ -25,19 +22,11 @@ function formatNaturalCurrency(amount) {
   }
   return '$' + Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
-
-/**
- * Limpia y convierte el premium a número
- */
 function cleanPremium(value) {
   if (!value) return 0;
   if (typeof value === 'number') return value;
   return parseFloat(value.toString().replace(/[^0-9.-]+/g, "")) || 0;
 }
-
-/**
- * Limpia un array de filas, asegurando número en policies y premium
- */
 function cleanRows(rows) {
   return rows.map(row => ({
     ...row,
@@ -46,10 +35,6 @@ function cleanRows(rows) {
     premium_percent: row.premium_percent !== undefined ? Number(row.premium_percent) : null
   }));
 }
-
-/**
- * Ejecuta un query seguro (maneja errores, devuelve [] si error)
- */
 async function safeQuery(query, params = []) {
   try {
     const { rows } = await pool.query(query, params);
@@ -59,10 +44,6 @@ async function safeQuery(query, params = []) {
     return [];
   }
 }
-
-/**
- * Obtiene la meta mensual actual desde la DB
- */
 async function getCurrentMonthlyGoal() {
   try {
     const result = await pool.query(
@@ -74,10 +55,6 @@ async function getCurrentMonthlyGoal() {
     return 10000000;
   }
 }
-
-/**
- * Obtiene premium total de la compañía del mes (para Remaining Goal)
- */
 async function getCompanyMonthTotal() {
   const today = new Date();
   const year = today.getFullYear();
@@ -96,7 +73,6 @@ async function getCompanyMonthTotal() {
       [initialDateStr, finalDateStr]
     );
   }
-  // Busca el row 'Total'
   let row = rows.rows.find(r => 
     (r.business_type || r.businesstype || r.type || '').toString().toLowerCase() === 'total'
   ) || rows.rows[0];
@@ -107,10 +83,7 @@ async function getCompanyMonthTotal() {
 }
 
 // --- API: SUMMARY (meta mensual y premium compañía) ---
-/**
- * Devuelve las métricas, meta mensual y premium real del mes (para frontend JS)
- */
-router.get('/api/franchise/summary', async (req, res) => {
+router.get('/summary', async (req, res) => {
   const inputDate = req.query.date || new Date().toISOString().split('T')[0];
   try {
     const summaryRows = await safeQuery(
@@ -129,10 +102,7 @@ router.get('/api/franchise/summary', async (req, res) => {
 });
 
 // --- RENDER: Vista EJS con totales y métricas ---
-/**
- * Renderiza la vista televisorFranquicies con métricas, top y totales
- */
-router.get('/api/franchise/render', async (req, res) => {
+router.get('/render', async (req, res) => {
   const inputDate = req.query.date || new Date().toISOString().split('T')[0];
   try {
     const summaryRows = await safeQuery(
@@ -223,10 +193,7 @@ router.get('/api/franchise/render', async (req, res) => {
 });
 
 // --- API: TOP DAY & TOP MONTH para DataTables ---
-/**
- * Devuelve los rankings de top día y mes para tablas, con totales
- */
-router.get('/api/franchise/top', async (req, res) => {
+router.get('/top', async (req, res) => {
   const inputDate = req.query.date || new Date().toISOString().split('T')[0];
   try {
     const topDayRows = await safeQuery(
