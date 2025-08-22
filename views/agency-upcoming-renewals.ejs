@@ -74,14 +74,14 @@
         </div>
 
         <div class="menu-inner-shadow"></div>
-
         <ul class="menu-inner py-1">
         
-         <!-- / Menu -->
+
+             <!-- / Menu -->
     
         <!-- Dashboard -->
 
-          <li class="menu-item ">
+          <li class="menu-item">
             <a href="/users/dashboard" class="menu-link">
               <i class="menu-icon tf-icons ti ti-smart-home"></i>
               <div data-i18n="Dashboard">Dashboard</div>
@@ -113,12 +113,14 @@
             <span class="menu-header-text" data-i18n="APPS">APPS</span>
 
 
+                
 <li class="menu-item active">
   <a href="/users/renewals/agency-upcoming-renewals" class="menu-link">
     <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
     <div data-i18n="Renewals">Renewals</div>
   </a>
 </li>
+
 
 
       <li class="menu-item">
@@ -139,7 +141,7 @@
   </a>
 </li>
 
-
+   
 
           <li class="menu-item">
          <a href="/users/gtidirectory" class="menu-link">
@@ -203,9 +205,40 @@
       
 <% } %>
 
+          
+ <%
+  const path = (typeof currentPath === 'string') ? currentPath : '';
+  const canSeeFK = (typeof canSeeFranchiseSection !== 'undefined')
+    ? canSeeFranchiseSection
+    : (user && (user.location_type === 1 || (user.department && user.department.trim() === 'Marketing & IT')));
+%>
 
-           
+<% if (canSeeFK) { %>
+  <li class="menu-header small text-uppercase">
+    <span class="menu-header-text" data-i18n="FRANCHISE">FRANCHISE</span>
+  </li>
 
+  <li class="menu-item <%= path.startsWith('/franchise-kpis') ? 'active' : '' %>">
+    <a href="/franchise-kpis" class="menu-link">
+      <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
+      <div data-i18n="Renewals">Renewals</div>
+    </a>
+  </li>
+
+
+
+  <li class="menu-item <%= path.startsWith('/franchise-errors') ? 'active' : '' %>">
+    <a href="/franchise-errors" class="menu-link">
+      <i class="menu-icon tf-icons ti ti-alert-triangle"></i>
+      <div data-i18n="Errors">Errors</div>
+    </a>
+  </li>
+
+
+
+
+
+   <% } %>  
         </ul>
 
       </aside>
@@ -348,22 +381,24 @@
 
 <div class="my-3"></div>
 
-<!-- NAV PILLS -->
+
+
 <ul class="nav nav-pills flex-column flex-md-row mb-4 mx-2 mx-md-4">
   <li class="nav-item">
-    <a class="nav-link active" href="/users/renewals/agency-upcoming-renewals">
+    <a class="nav-link active"
+       href="/users/renewals/agency-upcoming-renewals<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>">
       <i class="ti ti-repeat ti-xs me-1"></i>
       Upcoming Renewals
     </a>
   </li>
   <li class="nav-item">
-    <a class="nav-link" href="/users/renewals/agency-expired-not-renewed">
+    <a class="nav-link"
+       href="/users/renewals/agency-expired-not-renewed<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>">
       <i class="ti ti-repeat-off ti-xs me-1"></i>
       Expired Not Renewed
     </a>
   </li>
 </ul>
-
 
 <!-- /NAV PILLS -->
 <div class="mx-2 mx-md-4 mb-4">
@@ -540,6 +575,9 @@
   <script src="/vendor/libs/cleavejs/cleave.js"></script>
   <script src="/vendor/libs/cleavejs/cleave-phone.js"></script>
   <script src="/js/main.js"></script>
+  <script>
+  window.locationOverride = <%= typeof locationId !== 'undefined' && locationId ? Number(locationId) : 'null' %>;
+</script>
   <script src="/assets/js/intranet-agency-upcoming-renewals.js"></script>
 </body>
 </html>

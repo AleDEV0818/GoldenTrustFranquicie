@@ -1,8 +1,10 @@
 import express from "express";
 import { pool } from "../config/dbConfig.js";
+
 const router = express.Router();
 
-router.get('/gtidirectory', async (req, res) => { 
+
+router.get("/", async (req, res) => { 
   try {
     const result = await pool.query(`
       SELECT
@@ -17,14 +19,14 @@ router.get('/gtidirectory', async (req, res) => {
       WHERE u.active = true
       ORDER BY u.display_name ASC
     `);
-    res.render('gti_directory', {
-      users: result.rows,
-      user: req.user 
-    });
 
+    res.render("gti_directory", {
+      users: result.rows,
+      user: req.user
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Error fetching directory');
+    res.status(500).send("Error fetching directory");
   }
 });
 

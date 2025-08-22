@@ -335,8 +335,37 @@ div.dt-button-collection .dt-button:hover {
     <% } %>  
 
 
+<%
+  // Fallbacks seguros
+  const path = (typeof currentPath === 'string') ? currentPath : '';
+  const canSeeFK = (typeof canSeeFranchiseSection !== 'undefined')
+    ? canSeeFranchiseSection
+    : (user && (user.location_type === 1 || (user.department && user.department.trim() === 'Marketing & IT')));
+%>
 
-           
+<% if (canSeeFK) { %>
+  <li class="menu-header small text-uppercase">
+    <span class="menu-header-text" data-i18n="FRANCHISE">FRANCHISE</span>
+  </li>
+
+ <li class="menu-item <%= path.startsWith('/franchise-kpis') ? 'active' : '' %>">
+    <a href="/franchise-kpis" class="menu-link">
+      <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
+      <div data-i18n="Renewals">Renewals</div>
+    </a>
+  </li>
+
+
+
+  <li class="menu-item <%= path.startsWith('/franchise-errors') ? 'active' : '' %>">
+    <a href="/franchise-errors" class="menu-link">
+      <i class="menu-icon tf-icons ti ti-alert-triangle"></i>
+      <div data-i18n="Errors">Errors</div>
+    </a>
+  </li>
+
+
+<% } %>
 
         </ul>
 

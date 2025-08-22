@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="en" class="light-style layout-navbar-fixed layout-menu-fixed layout-compact" dir="ltr"
+  data-theme="theme-default" data-assets-path="/" data-template="vertical-menu-template">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Policy Report by Location | GTI</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Icons + CSS (vendor) -->
+  <link rel="stylesheet" href="/vendor/fonts/fontawesome.css" />
+  <link rel="stylesheet" href="/vendor/fonts/tabler-icons.css" />
+  <link rel="stylesheet" href="/vendor/fonts/flag-icons.css" />
+  <link rel="stylesheet" href="/vendor/css/rtl/core.css" />
+  <link rel="stylesheet" href="/vendor/css/rtl/theme-default.css" />
+  <link rel="stylesheet" href="/css/demo.css" />
+  <link rel="stylesheet" href="/vendor/libs/node-waves/node-waves.css" />
+  <link rel="stylesheet" href="/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
+  <link rel="stylesheet" href="/vendor/libs/typeahead-js/typeahead.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+
+
+  <!-- DataTables (Bootstrap 5 + Responsive + Buttons) -->
+  <link rel="stylesheet" href="/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
+  <link rel="stylesheet" href="/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
+  <link rel="stylesheet" href="/vendor/libs/datatables-buttons/buttons.bootstrap5.css" />
+
+  <style>/* === DataTables Export CSV Button === */
+.dataTables_wrapper .dt-buttons {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  margin-bottom: .75rem;
+}
+.dataTables_wrapper .dt-buttons .dt-button,
+.dataTables_wrapper .dt-buttons .btn {
+  padding: .35rem .7rem;
+  font-size: .85rem;
+  border-radius: .25rem !important;
+}
+.dataTables_wrapper .dt-buttons .btn-primary {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: #fff;
+}
+.dataTables_wrapper .dt-buttons .btn.btn-primary.export-csv-btn {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: #fff;
+}
+
+/* =========================
+   Modal (igual que franchise errors)
+   ========================= */
+#prlRowDetailsModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1055;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#prlRowDetailsModal .modal-card {
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 12px;
+  width: min(900px, 96vw);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+#prlRowDetailsModal .modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+#prlRowDetailsModal .modal-body {
+  padding: 20px 22px;
+}
+#prlRowDetailsModal .modal-footer {
+  padding: 14px 22px;
+  border-top: 1px solid var(--bs-border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+#prlRowDetailsModal .avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+#prlRowDetailsModal .grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 18px;
+}
+@media (max-width: 576px) {
+  #prlRowDetailsModal .grid { grid-template-columns: 1fr; }
+}
+#prlRowDetailsModal .item {
+  padding: 12px 14px;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 10px;
+}
+#prlRowDetailsModal .item .label {
+  font-size: 12px;
+  color: var(--bs-secondary-color);
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#prlRowDetailsModal .item .value {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+/* =========================
+   Flatpickr Glassy Dark/Green Style (DARK MODE)
+   ========================= */
+.dark-style .flatpickr-calendar {
+  border-radius: 1rem !important;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37) !important;
+  background: rgba(30,34,54,0.92) !important;
+  color: #fff !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.18) !important;
+  z-index: 1056;
+}
+.dark-style .flatpickr-months,
+.dark-style .flatpickr-month,
+.dark-style .flatpickr-current-month,
+.dark-style .flatpickr-prev-month,
+.dark-style .flatpickr-next-month {
+  color: #fff !important;
+  background: rgba(30,34,54,0.92) !important;
+  font-weight: 600;
+  border-radius: 0.75rem !important;
+}
+.dark-style .flatpickr-monthDropdown-months,
+.dark-style .flatpickr-yearDropdown-years {
+  background: rgba(30,34,54,0.92) !important;
+  color: #fff !important;
+  border-radius: 0.5em !important;
+  border: 1px solid rgba(255,255,255,0.18) !important;
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.37) !important;
+  backdrop-filter: blur(6px);
+  font-weight: 500;
+}
+.dark-style .flatpickr-days {
+  border-radius: .75rem !important;
+  background: rgba(40,44,74,0.93) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 12px 0 rgba(31,38,135,0.15) !important;
+}
+.dark-style .flatpickr-day {
+  color: #fff !important;
+  background: none !important;
+  border-radius: 0.5em !important;
+}
+.dark-style .flatpickr-day:hover {
+  background: #81C784cc !important; /* Verde claro con opacidad */
+  color: #111 !important;
+}
+.dark-style .flatpickr-day.selected,
+.dark-style .flatpickr-day.startRange,
+.dark-style .flatpickr-day.endRange,
+.dark-style .flatpickr-day.today {
+  background: #388E3C !important;
+  color: #fff !important;
+  font-weight: bold;
+  border-radius: 0.5em !important;
+}
+.dark-style .flatpickr-day.inRange {
+  background: #81C784 !important;
+  color: #222 !important;
+}
+.dark-style .flatpickr-day.disabled {
+  color: #bbb !important;
+  opacity: 0.7;
+}
+.dark-style input[type="text"].form-control,
+.dark-style input[type="text"].glass-calendar {
+  background: rgba(30,34,54,0.92) !important;
+  color: #fff !important;
+  border-radius: .75em !important;
+  border: 1px solid rgba(255,255,255,0.18) !important;
+  box-shadow: 0 2px 12px 0 rgba(31, 38, 135, 0.15) !important;
+}
+
+/* =========================
+   Flatpickr Glassy Light/Blue Style (LIGHT MODE)
+   ========================= */
+.light-style .flatpickr-calendar {
+  border-radius: 1rem !important;
+  box-shadow: 0 8px 32px 0 rgba(30, 70, 255, 0.13) !important;
+  background: #fff !important;
+  color: #222 !important;
+  backdrop-filter: blur(6px);
+  border: 1px solid #e0e7ff !important;
+  z-index: 1056;
+}
+.light-style .flatpickr-months,
+.light-style .flatpickr-month,
+.light-style .flatpickr-current-month,
+.light-style .flatpickr-prev-month,
+.light-style .flatpickr-next-month {
+  color: #3570ff !important;
+  background: #f1f4fe !important;
+  font-weight: 600;
+  border-radius: 0.75rem !important;
+}
+.light-style .flatpickr-monthDropdown-months,
+.light-style .flatpickr-yearDropdown-years {
+  background: #f1f4fe !important;
+  color: #3570ff !important;
+  border-radius: 0.5em !important;
+  border: 1px solid #e0e7ff !important;
+  box-shadow: 0 8px 32px 0 rgba(30,70,255,0.09) !important;
+  backdrop-filter: blur(4px);
+  font-weight: 500;
+}
+.light-style .flatpickr-days {
+  border-radius: .75rem !important;
+  background: #f7faff !important;
+  color: #3570ff !important;
+  box-shadow: 0 2px 12px 0 rgba(30,70,255,0.07) !important;
+}
+.light-style .flatpickr-day {
+  color: #3570ff !important;
+  background: none !important;
+  border-radius: 0.5em !important;
+}
+.light-style .flatpickr-day:hover {
+  background: #3570ff22 !important; /* Azul claro con opacidad */
+  color: #222 !important;
+}
+.light-style .flatpickr-day.selected,
+.light-style .flatpickr-day.startRange,
+.light-style .flatpickr-day.endRange,
+.light-style .flatpickr-day.today {
+  background: #3570ff !important;
+  color: #fff !important;
+  font-weight: bold;
+  border-radius: 0.5em !important;
+}
+.light-style .flatpickr-day.inRange {
+  background: #7ba6ff !important;
+  color: #222 !important;
+}
+.light-style .flatpickr-day.disabled {
+  color: #bbb !important;
+  opacity: 0.7;
+}
+.light-style input[type="text"].form-control,
+.light-style input[type="text"].glass-calendar {
+  background: #fff !important;
+  color: #3570ff !important;
+  border-radius: .75em !important;
+  border: 1px solid #e0e7ff !important;
+  box-shadow: 0 2px 12px 0 rgba(30,70,255,0.07) !important;
+}
+
+
+#prl-apply,
+#franchise-select {
+  height: 40px;
+  font-size: 16px;
+}
+  </style>
+
+</head>
+<body>
+  
+  <div class="layout-wrapper layout-content-navbar">
+    <!-- Layout container -->
+    <div class="layout-container">
+      <!-- Menu -->
+
+      <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+        <div class="app-brand demo">
+          <a href="/users/agencie" class="app-brand-link">
+            <!--<span class="app-brand-logo">
+              <img src="/img/branding/gt.png" alt="">
+            </span>-->
+            <span class="app-brand-text">
+              <img src="/img/branding/gti_logo1.png" alt="" id="menuLogo">
+            </span>
+          </a>
+          <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
+            <i class="ti menu-toggle-icon d-none d-xl-block ti-sm align-middle"></i>
+            <i class="ti ti-x d-block d-xl-none ti-sm align-middle"></i>
+          </a>
+        </div>
+
+        <div class="menu-inner-shadow"></div>
+
+        <ul class="menu-inner py-1">
+        
+
+             <!-- / Menu -->
+    
+        <!-- Dashboard -->
+
+          <li class="menu-item ">
+            <a href="/users/dashboard" class="menu-link">
+              <i class="menu-icon tf-icons ti ti-smart-home"></i>
+              <div data-i18n="Dashboard">Dashboard</div>
+            </a>
+          </li>
+
+         <li class="menu-item">
+  <a href="/users/statistics/policies" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-chart-bar"></i>
+    <div data-i18n="Stats">Stats</div>
+  </a>
+ </li>
+
+
+ <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="Sales">Sales</span>
+
+
+          
+                          <li class="menu-item ">
+                  <a href="/users/agency" class="menu-link">
+                  <i class="menu-icon tf-icons ti ti-home-heart"></i>
+           <div data-i18n="Agencies">Agencies</div>
+           </a>
+                  </li>
+
+
+   <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="APPS">APPS</span>
+
+
+                
+<li class="menu-item">
+  <a href="/users/renewals/agency-upcoming-renewals" class="menu-link">
+    <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
+    <div data-i18n="Renewals">Renewals</div>
+  </a>
+</li>
+
+
+
+      <li class="menu-item">
+  <a href="/users/licensed-agents" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-id"></i>
+    <div data-i18n="Licensee Details">Licensee Details</div>
+  </a>
+</li>
+                
+
+ <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="MARKETING">MARKETING</span>
+
+<li class="menu-item">
+  <a href="/users/renewals/message-center" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-speakerphone"></i> 
+    <div data-i18n="Message Center">Message Center</div>
+  </a>
+</li>
+
+ 
+
+          <li class="menu-item">
+         <a href="/users/gtidirectory" class="menu-link">
+        <i class="menu-icon tf-icons ti ti-address-book"></i>
+          <div data-i18n="GTI Directory">GTI Directory</div>
+              </a>
+                  </li>
+
+       
+
+<li class="menu-item">
+  <a href="javascript:void(0);" class="menu-link menu-toggle">
+    <i class="menu-icon tf-icons ti ti-device-tv"></i>
+    <div data-i18n="TV">TV</div>
+  </a>
+  <ul class="menu-sub">
+    <li class="menu-item">
+      <a href="/televisor/totals" class="menu-link">
+        <div data-i18n="New Business">New Business</div>
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="/televisor-renewed/totals" class="menu-link">
+        <div data-i18n="Renewals">Renewals</div>
+      </a>
+    </li>
+ <% if (user && user.location_type === 1) { %>
+  <li class="menu-item">
+    <a href="/api/franchise/render" class="menu-link">
+      <div data-i18n="Franchise TV">Franchise TV</div>
+    </a>
+  </li>
+<% } %>
+  </ul>
+</li>
+
+
+ 
+
+          <!-- ////////////////ADMIN/////////////////////// -->
+ <% if (user && user.location_type === 1 && user.department && user.department.trim() === "Marketing & IT") { %>  
+  <li class="menu-header small text-uppercase">
+    <span class="menu-header-text" data-i18n="ADMIN">ADMIN</span>
+  </li>
+  <li class="menu-item">
+    <a href="/users/config/headcarriers" class="menu-link">
+      <i class="menu-icon tf-icons ti ti-settings-check"></i>
+      <div data-i18n="Config">Config</div>
+    </a>
+  </li>
+
+
+
+<li class="menu-item">
+  <a href="/users/codes" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-key"></i>
+    <div data-i18n="Carries Codes">Carries Codes</div>
+  </a>
+</li>
+
+      
+<% } %>
+
+          
+ <%
+  const path = (typeof currentPath === 'string') ? currentPath : '';
+  const canSeeFK = (typeof canSeeFranchiseSection !== 'undefined')
+    ? canSeeFranchiseSection
+    : (user && (user.location_type === 1 || (user.department && user.department.trim() === 'Marketing & IT')));
+%>
+
+<% if (canSeeFK) { %>
+  <li class="menu-header small text-uppercase">
+    <span class="menu-header-text" data-i18n="FRANCHISE">FRANCHISE</span>
+  </li>
+
+  <li class="menu-item <%= path.startsWith('/franchise-kpis') ? 'active' : '' %>">
+    <a href="/franchise-kpis" class="menu-link">
+      <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
+      <div data-i18n="Renewals">Renewals</div>
+    </a>
+  </li>
+
+
+
+  <li class="menu-item active <%= path.startsWith('/franchise-errors') ? 'active' : '' %>">
+    <a href="/franchise-errors" class="menu-link">
+      <i class="menu-icon tf-icons ti ti-alert-triangle"></i>
+      <div data-i18n="Errors">Errors</div>
+    </a>
+  </li>
+
+
+
+
+
+   <% } %>  
+        </ul>
+
+      </aside>
+
+      <!-- / Menu -->
+
+      <!-- Layout page -->
+      <div class="layout-page">
+        <!-- Navbar -->
+
+        <nav
+          class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
+          id="layout-navbar">
+          <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+            <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+              <i class="ti ti-menu-2 ti-sm"></i>
+            </a>
+          </div>
+
+          <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+
+
+            <!-- Search -->
+            <div class="navbar-nav align-items-center">
+              <div class="nav-item navbar-search-wrapper mb-0">
+                <a class="nav-item nav-link search-toggler d-flex align-items-center px-0" href="javascript:void(0);">
+                  <i class="ti ti-search ti-md me-2"></i>
+                  <span class="d-none d-md-inline-block text-muted">Search (Ctrl+/)</span>
+                </a>
+              </div>
+            </div>
+            <!-- /Search -->
+
+            <ul class="navbar-nav flex-row align-items-center ms-auto">
+
+              <!-- Style Switcher -->
+              <li class="nav-item dropdown-style-switcher dropdown me-2 me-xl-0">
+                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                  <i class="ti ti-md"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end dropdown-styles">
+                  <li>
+                    <a class="dropdown-item" href="javascript:void(0);" data-theme="light">
+                      <span class="align-middle"><i class="ti ti-sun me-2"></i>Light</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="javascript:void(0);" data-theme="dark">
+                      <span class="align-middle"><i class="ti ti-moon me-2"></i>Dark</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="javascript:void(0);" data-theme="system">
+                      <span class="align-middle"><i class="ti ti-device-desktop me-2"></i>System</span>
+                    </a>
+                  </li>
+                </ul>
+              </li>
+
+              <!-- Notification -->
+              <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-1">
+                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown"
+                  data-bs-auto-close="outside" aria-expanded="false">
+                  <i class="ti ti-bell ti-md"></i>
+                  <!--<span class="badge bg-danger rounded-pill badge-notifications">5</span>-->
+                </a>
+
+                <ul class="dropdown-menu dropdown-menu-end py-0">
+                  <li class="dropdown-menu-header border-bottom">
+                    <div class="dropdown-header d-flex align-items-center py-3">
+                      <h5 class="text-body mb-0 me-auto">Notification</h5>
+                      <a href="javascript:void(0)" class="dropdown-notifications-all text-body" data-bs-toggle="tooltip"
+                        data-bs-placement="top" title="Mark all as read"><i class="ti ti-mail-opened fs-4"></i></a>
+                    </div>
+                  </li>
+              </li>
+              <li class="dropdown-menu-footer border-top">
+                <a href="javascript:void(0);"
+                  class="dropdown-item d-flex justify-content-center text-primary p-2 h-px-40 mb-1 align-items-center">
+                  View all notifications
+                </a>
+              </li>
+            </ul>
+            </li>
+            <!--/ Notification -->
+
+            <!-- User -->
+            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+              <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                <div class="avatar avatar-online">
+                  <img src="/img/avatars/users/<%=user.user_id%>.png" alt class="h-auto rounded-circle" />
+                </div>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <a class="dropdown-item" href="pages-account-settings-account.html">
+                    <div class="d-flex">
+                      <div class="flex-shrink-0 me-3">
+                        <div class="avatar avatar-online">
+                          <img src="/img/avatars/users/<%=user.user_id%>.png" alt class="h-auto rounded-circle" />
+                        </div>
+                      </div>
+                      <div class="flex-grow-1">
+                        <span class="fw-medium d-block">
+                          <%= user.display_name %>
+                        </span>
+                        <small class="text-muted">
+                          <%=user.job_title%>
+                        </small>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+                <li>
+                  <div class="dropdown-divider"></div>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="/users/logout"> <!-- target="_blank" -->
+                    <i class="ti ti-logout me-2 ti-sm"></i>
+                    <span class="align-middle">Log Out</span>
+                  </a>
+                </li>
+              </ul>
+            </li>
+            <!--/ User -->
+            </ul>
+          </div>
+
+          <!-- Search Small Screens -->
+          <div class="navbar-search-wrapper search-input-wrapper d-none">
+            <input type="text" class="form-control search-input container-xxl border-0" placeholder="Search..."
+              aria-label="Search..." />
+            <i class="ti ti-x ti-sm search-toggler cursor-pointer"></i>
+          </div>
+        </nav>
+
+        <!-- / Navbar -->
+
+<div class="my-3"></div>
+
+<ul class="nav nav-pills flex-column flex-md-row mb-4 mx-2 mx-md-4">
+
+  <li class="nav-item">
+    <a
+      class="nav-link <%= (currentPath || '').startsWith('/users/policy-report-by-location') ? 'active' : '' %>"
+      href="/users/policy-report-by-location<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>"
+    >
+      <i class="ti ti-report ti-xs me-1"></i>
+      Policy Report
+    </a>
+  </li>
+
+  <li class="nav-item">
+    <a
+      class="nav-link <%= (currentPath || '').startsWith('/users/missing-csr-producer') ? 'active' : '' %>"
+      href="/users/missing-csr-producer<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>"
+    >
+      <i class="ti ti-user-exclamation ti-xs me-1"></i>
+      Missing CSR/Producer
+    </a>
+  </li>
+
+  <li class="nav-item">
+    <a
+      class="nav-link <%= (currentPath || '').startsWith('/users/missing-contact-errors') ? 'active' : '' %>"
+      href="/users/missing-contact-errors<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>"
+    >
+      <i class="ti ti-mail-x ti-xs me-1"></i>
+      Missing Contact Info
+    </a>
+  </li>
+</ul>
+
+<!-- Selector de fechas + filtro/franquicia/alias -->
+<div class="mx-2 mx-md-4 mb-4">
+  <div class="card shadow">
+    <div class="card-body">
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <!-- Fechas -->
+        <div class="d-flex align-items-center gap-2">
+          <label for="prl-start" class="form-label mb-0">Start</label>
+          <input type="date" id="prl-start" class="form-control form-control-sm" style="min-width:120px; max-width:140px;"
+                 value="<%= initialRange?.startISO || '' %>" />
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <label for="prl-end" class="form-label mb-0">End</label>
+          <input type="date" id="prl-end" class="form-control form-control-sm" style="min-width:120px; max-width:140px;"
+                 value="<%= initialRange?.endISO || '' %>" />
+        </div>
+
+        <!-- Botón Apply -->
+        <button class="btn btn-primary btn-sm" id="prl-apply">
+          <i class="ti ti-refresh me-1"></i> Apply
+        </button>
+
+        <!-- Selector de franquicia (sin opción "All Franchises") o badge de alias -->
+        <% if (location_type === 1 && Array.isArray(franchises) && franchises.length > 0) { %>
+          <% var selectedId = typeof locationId !== 'undefined' ? locationId : ""; %>
+          <select id="franchise-select" class="form-select form-select-sm"
+                  style="width:160px; min-width:120px; max-width:180px;">
+            <% franchises.forEach(function(franchise) { %>
+              <option value="<%= franchise.location_id %>" <%= String(franchise.location_id) === String(selectedId) ? 'selected' : '' %>>
+                <%= franchise.alias %>
+              </option>
+            <% }); %>
+          </select>
+        <% } else { %>
+          <span class="badge bg-primary text-white" id="prl-selected-range"><%= location_alias || "—" %></span>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabla -->
+<div class="mx-2 mx-md-4 my-4">
+  <div class="card shadow">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="datatable-policy-report-by-location table table-striped table-bordered align-middle mb-0" style="width:100%;">
+          <thead>
+            <tr>
+              <th>Policy #</th>
+              <th>Line of Business</th>
+              <th>Business Type</th>
+              <th>CSR</th>
+              <th>Producer</th>
+              <th>Binder Date</th>
+              <th>Effective Date</th>
+              <th>Location</th>
+              <th>Policy Status</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <!-- El botón Export CSV lo inserta DataTables (dom: 'B...') -->
+    </div>
+  </div>
+</div>
+
+<footer class="content-footer footer bg-footer-theme">
+  <div class="container-xxl">
+    <div class="footer-container d-flex align-items-center justify-content-between py-2 flex-md-row flex-column">
+      <div>
+        <script>document.write(new Date().getFullYear());</script>, &nbsp;
+        <a href="https://goldentrust.com" target="_blank" class="footer-link text-primary fw-medium">GTI | Marketing & IT Department</a>
+      </div>
+      <div class="d-none d-lg-inline-block">
+        <a href="https://goldentrust.com" class="footer-link me-4" target="_blank">GoldenTrust.com</a>
+        <a href="https://admin.goldensoft.pro" target="_blank" class="footer-link me-4">CRM</a>
+        <a href="https://365.goldentrustinsurance.com" target="_blank" class="footer-link me-4">Email</a>
+        <a href="https://internal.goldentrustinsurance.com" target="_blank" class="footer-link me-4">Intranet</a>
+      </div>
+    </div>
+  </div>
+</footer>
+<div class="content-backdrop fade"></div>
+
+  <!-- Core JS -->
+  <script src="/vendor/libs/jquery/jquery.js"></script>
+  <script src="/vendor/libs/popper/popper.js"></script>
+  <script src="/vendor/js/bootstrap.js"></script>
+  <script src="/vendor/libs/node-waves/node-waves.js"></script>
+  <script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+  <script src="/vendor/libs/i18n/i18n.js"></script>
+
+  <!-- Estos archivos definen variables usadas por main.js -->
+  <script src="/vendor/js/helpers.js"></script>
+  <script src="/vendor/js/template-customizer.js"></script>
+  <script src="/js/config.js"></script>
+
+  <!-- Typeahead (si tu main lo usa para el buscador) -->
+  <script src="/vendor/libs/typeahead-js/typeahead.js"></script>
+  <script>if (!$.fn.typeahead) { $.fn.typeahead = function(){ return this; }; }</script>
+
+  <script src="/vendor/js/menu.js"></script>
+
+  <!-- DataTables core (Bootstrap 5 integration) -->
+  <script src="/vendor/libs/datatables-bs5/datatables-bootstrap5.js"></script>
+
+  <!-- DataTables: extensiones para Export CSV y Responsive -->
+  <script src="/vendor/libs/jszip/jszip.min.js"></script>
+  <script src="/vendor/libs/datatables-buttons/dataTables.buttons.min.js"></script>
+  <script src="/vendor/libs/datatables-buttons/buttons.html5.min.js"></script>
+  <script src="/vendor/libs/datatables-buttons/buttons.bootstrap5.min.js"></script>
+  <script src="/vendor/libs/datatables-responsive-bs5/responsive-bootstrap5.js"></script>
+
+<script src="/js/date.js"></script>
+
+  <!-- JS global del tema -->
+  <script src="/js/main.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <!-- JS específico de la vista -->
+  <script src="/js/policy-report-by-location.js"></script>
+</body>
+</html>
