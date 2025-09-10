@@ -1,18 +1,12 @@
 "use strict";
 
 /**
- * Policy Report by Location (aislado en IIFE para evitar globals).
- * - DataTable con modal de detalles por fila
- * - Mantiene contexto ?location,&start,&end en navegación
- * - Sin reinit de DataTables (guard + destroy)
- * - Modal inyectado desde JS, SIN avatares (igual que en Missing)
- * - Si location_type === 1 (corporativo), muestra filtro de franquicias en vez del badge de fechas/location
- * - NO muestra opción "All Franchises" en el select
+ * Policy Report by Location (frontend)
+ * - KPI "Binder Errors" = total de filas visibles actualmente en DataTable (tras search/order/page/length).
+ * - Se actualiza en cada draw de DataTables y cuando se recarga la tabla.
+ * - "Active Policies" sigue actualizándose automáticamente al cambiar el selector (endpoint ligero).
  */
 (function () {
-  /* =========================
-     Helpers (dates)
-     ========================= */
   function formatDateISO(d) {
     if (!d) return null;
     const dt = new Date(d);
@@ -41,25 +35,29 @@
     }
     return formatDateISO(v);
   }
+  function intDisp(n) {
+    const x = Number(n);
+    return Number.isFinite(x) ? x.toLocaleString("en-US") : "0";
+  }
 
-  /* =========================
-     Contexto de query (location + range) y actualización de nav links
-     ========================= */
   function getQueryContext() {
     const p = new URLSearchParams(location.search);
     const start = parseAnyToISO(p.get("start"));
     const end = parseAnyToISO(p.get("end"));
+    const activeRaw = (p.get("active") || "").toLowerCase();
+    const active = activeRaw === "1" || activeRaw === "true" || activeRaw === "on" || activeRaw === "yes";
+
     let locationIdRaw = p.get("location");
-    // Si existe el select, úsalo
     const select = document.getElementById("franchise-select");
     if (select) {
       const selVal = select.value;
       if (selVal !== undefined && selVal !== "") locationIdRaw = selVal;
     }
     const locationId = locationIdRaw != null && locationIdRaw !== "" ? Number(locationIdRaw) : null;
-    return { start, end, locationId };
+    return { start, end, locationId, active };
   }
-  function updateNavLinksWithContext({ start, end, locationId }) {
+
+  function updateNavLinksWithContext({ start, end, locationId, active }) {
     try {
       const links = document.querySelectorAll(
         'a[href^="/users/missing-csr-producer"], a[href^="/users/policy-report-by-location"]'
@@ -67,16 +65,20 @@
       links.forEach(a => {
         const url = new URL(a.getAttribute("href"), window.location.origin);
         if (locationId != null && !Number.isNaN(locationId)) url.searchParams.set("location", String(locationId));
-        if (start && end) { url.searchParams.set("start", start); url.searchParams.set("end", end); }
+        if (active) url.searchParams.set("active", "1"); else url.searchParams.delete("active");
+        if (start && end) {
+          url.searchParams.set("start", start);
+          url.searchParams.set("end", end);
+        } else {
+          url.searchParams.delete("start");
+          url.searchParams.delete("end");
+        }
         a.setAttribute("href", url.pathname + (url.search ? url.search : ""));
       });
-    } catch (e) { console.warn("[PRL] Failed to update nav links with context:", e); }
+    } catch {}
   }
 
-  /* =========================
-     DataTable
-     ========================= */
-  let PRL_CTX = { start: null, end: null, locationId: null };
+  let PRL_CTX = { start: null, end: null, locationId: null, active: false };
   let dt; let dtInitialized = false;
 
   function renderDateCell(d, t) {
@@ -85,15 +87,74 @@
     return isNaN(x.getTime()) ? 0 : x.getTime();
   }
 
+  function forceAllColumns(rows) {
+    const keys = [
+      "policy_number",
+      "line_of_business",
+      "business_type",
+      "csr",
+      "producer",
+      "binder_date",
+      "effective_date",
+      "location",
+      "policy_status"
+    ];
+    return (rows || []).map(row => {
+      const obj = {};
+      keys.forEach(k => { obj[k] = row && typeof row[k] !== "undefined" ? row[k] : ""; });
+      return obj;
+    });
+  }
+
+  // KPIs
+  function updateActivePoliciesCount(count) {
+    const el = document.getElementById("prl-active-policies-count");
+    if (!el) return;
+    const n = Number(count);
+    el.textContent = Number.isFinite(n) ? n.toLocaleString("en-US") : "0";
+  }
+  function updateBinderErrorsCount(count) {
+    const el = document.getElementById("prl-binder-errors-count");
+    if (!el) return;
+    const n = Number(count);
+    el.textContent = Number.isFinite(n) ? n.toLocaleString("en-US") : "0";
+  }
+
+  // Importante: ignorar la fila "placeholder" vacía del backend para no contarla
+  function isNonEmptyRow(r) {
+    if (!r || typeof r !== "object") return false;
+    const fields = [
+      "policy_number",
+      "line_of_business",
+      "business_type",
+      "csr",
+      "producer",
+      "binder_date",
+      "effective_date",
+      "location",
+      "policy_status"
+    ];
+    return fields.some(k => String(r[k] || "").trim() !== "");
+  }
+
+  // Total que "aparece" en la DataTable con filtros/búsqueda aplicados
+  function updateBinderErrorsFromTable() {
+    if (!dt) return;
+    const data = dt.rows({ search: "applied" }).data().toArray();
+    const count = data.filter(isNonEmptyRow).length;
+    updateBinderErrorsCount(count);
+  }
+
   function initPolicyReportTable(rows) {
     const $table = $(".datatable-policy-report-by-location");
-    if (!$table.length) { console.warn("[PRL] No table found with .datatable-policy-report-by-location"); return; }
-    if (!$.fn || !$.fn.DataTable) { console.error("[PRL] DataTables is not loaded."); return; }
+    if (!$table.length || !$.fn || !$.fn.DataTable) return;
 
     if ($.fn.DataTable.isDataTable($table)) {
       const existing = $table.DataTable();
       existing.clear().rows.add(rows || []).draw(false);
-      dt = existing; dtInitialized = true; return;
+      dt = existing; dtInitialized = true;
+      updateBinderErrorsFromTable();
+      return;
     }
 
     const hasButtons = !!($.fn.dataTable && $.fn.dataTable.Buttons);
@@ -106,6 +167,7 @@
       data: rows || [],
       ordering: true,
       order: [[6, "desc"]],
+      scrollX: true,
       columns: [
         { data: "policy_number",    title: "Policy #",        className: "text-nowrap" },
         { data: "line_of_business", title: "Line of Business" },
@@ -118,10 +180,14 @@
         { data: "policy_status",    title: "Policy Status",   className: "text-nowrap" }
       ],
       dom: domLayout,
-      paging: true, searching: true, info: true, lengthChange: true,
+      paging: true,
+      searching: true,
+      info: true,
+      lengthChange: true,
       pageLength: 25,
       lengthMenu: [[10, 25, 50, 100, -1], ["10", "25", "50", "100", "All"]],
-      responsive: true, autoWidth: false,
+      responsive: true,
+      autoWidth: false,
       language: {
         url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/en-GB.json",
         search: "Search:",
@@ -150,139 +216,36 @@
     dt = $table.DataTable(dtOptions);
     dtInitialized = true;
 
-    const $csvBtn = $table.closest(".card, .container, body")
-      .find(".dataTables_wrapper .dt-buttons .buttons-csv, .dataTables_wrapper .dt-buttons .buttons-html5");
-    $csvBtn.addClass("btn btn-sm btn-primary export-csv-btn");
-
-    $table.off("click.prl", "tbody tr").on("click.prl", "tbody tr", function () {
-      const row = dt.row(this).data();
-      if (!row) return;
-      openPolicyModal(row);
+    // Mantener KPI sincronizado con lo que aparece en la tabla
+    dt.on("draw.dt search.dt order.dt page.dt length.dt", function () {
+      updateBinderErrorsFromTable();
     });
+
+    // Inicial
+    updateBinderErrorsFromTable();
   }
 
-  /* =========================
-     Modal (inyectado desde JS, sin avatar)
-     ========================= */
-  function ensurePolicyModal() {
-    if (document.getElementById("prlRowDetailsModal")) return;
-
-    // Estilos del modal
-    const style = document.createElement("style");
-    style.id = "prl-row-modal-css";
-    style.textContent = `
-      #prlRowDetailsModal{display:none;position:fixed;inset:0;background:rgba(15,18,22,.55);backdrop-filter:blur(2px);z-index:1055;align-items:center;justify-content:center;padding:20px;}
-      #prlRowDetailsModal .modal-card{background:var(--bs-body-bg);color:var(--bs-body-color);border:1px solid var(--bs-border-color);border-radius:16px;width:min(920px,96vw);box-shadow:0 24px 60px rgba(0,0,0,.25);overflow:hidden;}
-      #prlRowDetailsModal .modal-header{display:flex;align-items:center;gap:14px;padding:18px 22px;border-bottom:1px solid var(--bs-border-color);}
-      #prlRowDetailsModal .modal-body{padding:20px 22px;}
-      #prlRowDetailsModal .modal-footer{padding:14px 22px;border-top:1px solid var(--bs-border-color);display:flex;justify-content:flex-end;gap:10px;}
-      #prlRowDetailsModal .title-wrap{display:flex;flex-direction:column;line-height:1.2}
-      #prlRowDetailsModal .title-wrap .title{font-weight:700;font-size:1.15rem}
-      #prlRowDetailsModal .title-wrap .subtitle{opacity:.8;font-size:.86rem}
-      #prlRowDetailsModal .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 18px;}
-      @media (max-width:576px){#prlRowDetailsModal .grid{grid-template-columns:1fr;}}
-      #prlRowDetailsModal .item{padding:14px;border:1px solid var(--bs-border-color);border-radius:12px;display:flex;align-items:flex-start;gap:10px;}
-      #prlRowDetailsModal .item i{font-size:18px;color:var(--bs-primary);}
-      #prlRowDetailsModal .meta{display:flex;flex-direction:column;gap:4px}
-      #prlRowDetailsModal .label{font-size:12px;color:var(--bs-secondary-color);text-transform:uppercase;letter-spacing:.03em}
-      #prlRowDetailsModal .value{font-size:15px;font-weight:600;word-break:break-word}
-      #prlRowDetailsModal .btn-close-x{border:none;background:transparent;color:inherit;padding:6px 8px;border-radius:8px}
-      #prlRowDetailsModal .btn-close-x:hover{background:rgba(0,0,0,.06)}
-    `;
-    document.head.appendChild(style);
-
-    // Estructura del modal
-    const wrapper = document.createElement("div");
-    wrapper.id = "prlRowDetailsModal";
-    wrapper.innerHTML = `
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="prlRowTitle">
-        <div class="modal-header">
-          <div class="title-wrap">
-            <div id="prlRowTitle" class="title">Policy</div>
-            <div id="prlRowSubtitle" class="subtitle">Details</div>
-          </div>
-          <button type="button" class="btn-close-x ms-auto" id="prlRowCloseTop" title="Close"><i class="ti ti-x"></i></button>
-        </div>
-        <div class="modal-body">
-          <div class="grid" id="prlRowGrid"></div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" id="prlRowCloseBottom">Close</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(wrapper);
-
-    // Cierre del modal
-    const closeModal = () => { wrapper.style.display = "none"; };
-    document.getElementById("prlRowCloseTop")?.addEventListener("click", closeModal);
-    document.getElementById("prlRowCloseBottom")?.addEventListener("click", closeModal);
-    wrapper.addEventListener("click", (e) => { if (e.target === wrapper) closeModal(); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && wrapper.style.display === "flex") closeModal(); });
-  }
-
-  function openPolicyModal(row) {
-    ensurePolicyModal();
-
-    const policyNum = row?.policy_number || "";
-    const lob = row?.line_of_business || "";
-
-    const titleEl = document.getElementById("prlRowTitle");
-    if (titleEl) titleEl.textContent = policyNum ? `Policy ${policyNum}` : "Policy";
-
-    const subtitleEl = document.getElementById("prlRowSubtitle");
-    if (subtitleEl) subtitleEl.textContent = lob ? `LOB: ${lob}` : "Details";
-
-    const items = [
-      { label: "Policy #",         icon: "ti ti-hash",           value: policyNum || "" },
-      { label: "Line of Business", icon: "ti ti-briefcase",      value: lob || "" },
-      { label: "Business Type",    icon: "ti ti-businessplan",   value: row?.business_type || "" },
-      { label: "CSR",              icon: "ti ti-user",           value: row?.csr || "" },
-      { label: "Producer(s)",      icon: "ti ti-users",          value: row?.producer || "" },
-      { label: "Binder Date",      icon: "ti ti-calendar",       value: safeDateDisp(row?.binder_date) },
-      { label: "Effective Date",   icon: "ti ti-calendar-stats", value: safeDateDisp(row?.effective_date) },
-      { label: "Location",         icon: "ti ti-map-pin",        value: row?.location || "" },
-      { label: "Policy Status",    icon: "ti ti-info-circle",    value: row?.policy_status || "" }
-    ];
-
-    const grid = document.getElementById("prlRowGrid");
-    if (grid) {
-      grid.innerHTML = items.map(it => `
-        <div class="item">
-          <i class="${it.icon}"></i>
-          <div class="meta">
-            <div class="label">${it.label}</div>
-            <div class="value">${it.value ?? ""}</div>
-          </div>
-        </div>
-      `).join("");
-    }
-
-    const modal = document.getElementById("prlRowDetailsModal");
-    if (modal) modal.style.display = "flex";
-  }
-
-  /* =========================
-     Update table
-     ========================= */
   function updatePolicyReportTable(rows) {
     if (!dtInitialized) { initPolicyReportTable(rows); return; }
     dt.clear(); dt.rows.add(rows || []); dt.draw(false);
+    updateBinderErrorsFromTable();
   }
 
-  /* =========================
-     Fetch + Render
-     ========================= */
-  async function fetchAndRenderPolicyReport(startISO, endISO, opts = {}) {
+  async function fetchActivePoliciesCount(locationId) {
+    if (locationId == null || Number.isNaN(Number(locationId))) return;
+    try {
+      const url = `/api/active-policies-count?location=${encodeURIComponent(locationId)}`;
+      const res = await fetch(url, { cache: "no-store", credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } });
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      const data = await res.json();
+      updateActivePoliciesCount(data.count || 0);
+    } catch {}
+  }
+
+  async function fetchAndRenderPolicyReport(startISO, endISO) {
     try {
       const params = new URLSearchParams();
-      if (opts.all === true) {
-        params.set("start", "all"); params.set("end", "all");
-      } else {
-        if (startISO) params.set("start", startISO);
-        if (endISO) params.set("end", endISO);
-      }
-      // Si hay franquicia seleccionada, agrégala al query
+
       const select = document.getElementById("franchise-select");
       let locationId = PRL_CTX.locationId;
       if (select && select.value !== "") locationId = select.value;
@@ -290,8 +253,14 @@
         params.set("location", String(locationId));
       }
 
-      const DEBUG = false;
-      if (DEBUG) params.set("debug", "1");
+      const activeChk = document.getElementById("prl-active-only");
+      const activeOnly = !!(activeChk && activeChk.checked);
+      if (activeOnly) params.set("active", "1");
+
+      if (startISO && endISO) {
+        params.set("start", startISO);
+        params.set("end", endISO);
+      }
 
       const url = `/api/policy-report-by-location?${params.toString()}`;
       const res = await fetch(url, {
@@ -299,104 +268,70 @@
         credentials: "same-origin",
         headers: { "X-Requested-With": "XMLHttpRequest" }
       });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(`Fetch failed: ${res.status} ${txt}`);
-      }
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       const data = await res.json();
 
-      updatePolicyReportTable(data.rows || []);
-
-      // Actualiza UI del filtro franquicia/alias
-      if (data.location_type === 1 && Array.isArray(data.franchises)) {
-        // Solo franquicias, SIN opción "All Franchises"
-        let options = "";
-        data.franchises.forEach(fr => {
-          options += `<option value="${fr.location_id}">${fr.alias}</option>`;
-        });
-        $("#franchise-select").html(options).show();
-        $("#prl-selected-range").hide();
-      } else {
-        $("#franchise-select").hide();
-        $("#prl-selected-range").text(data.location_alias || "—").show();
+      updatePolicyReportTable(forceAllColumns(data.rows || []));
+      if (typeof data.activePoliciesCount === "number") {
+        updateActivePoliciesCount(data.activePoliciesCount);
       }
+
+      PRL_CTX.active = !!data.activeOnly;
+      PRL_CTX.start = data.range?.startISO || null;
+      PRL_CTX.end = data.range?.endISO || null;
+      updateNavLinksWithContext({
+        start: PRL_CTX.start,
+        end: PRL_CTX.end,
+        locationId: PRL_CTX.locationId,
+        active: PRL_CTX.active
+      });
     } catch (e) {
-      console.error("Error fetching policy report:", e);
-      alert("Error loading data: " + (e?.message || e));
+      alert("Error loading data");
     }
   }
 
-  /* =========================
-     Bootstrap
-     ========================= */
   $(function () {
     PRL_CTX = getQueryContext();
+
+    if (window.flatpickr) {
+      flatpickr("#prl-start", { dateFormat: "Y-m-d", allowInput: true });
+      flatpickr("#prl-end",   { dateFormat: "Y-m-d", allowInput: true });
+    }
 
     if (PRL_CTX.start) $("#prl-start").val(PRL_CTX.start);
     if (PRL_CTX.end) $("#prl-end").val(PRL_CTX.end);
 
-    updateNavLinksWithContext(PRL_CTX);
+    const activeChk = document.getElementById("prl-active-only");
+    if (activeChk) activeChk.checked = !!PRL_CTX.active;
 
     const init = window.PRL_INITIAL || null;
     if (init) {
-      updatePolicyReportTable(init.rows || []);
-      // UI inicial: franquicia o alias
-      if (init.location_type === 1 && Array.isArray(init.franchises)) {
-        let options = "";
-        init.franchises.forEach(fr => {
-          options += `<option value="${fr.location_id}">${fr.alias}</option>`;
-        });
-        if (!$("#franchise-select").length) {
-          // Crea el select si no existe
-          $(".d-flex.flex-wrap.align-items-center.gap-2")
-            .append(`<select id="franchise-select" class="form-select ms-auto" style="min-width:200px;"></select>`);
-        }
-        $("#franchise-select").html(options).show();
-        // Selecciona la franquicia correcta por id
-        $("#franchise-select").val(init.selectedFranchiseId || PRL_CTX.locationId || "");
-        $("#prl-selected-range").hide();
-      } else {
-        if (!$("#prl-selected-range").length) {
-          $(".d-flex.flex-wrap.align-items-center.gap-2")
-            .append(`<span class="badge bg-primary ms-auto text-white" id="prl-selected-range">${init.location_alias || "—"}</span>`);
-        } else {
-          $("#prl-selected-range").text(init.location_alias || "—").show();
-        }
-        $("#franchise-select").hide();
+      const rows = Array.isArray(init.rows) ? init.rows : [];
+      updatePolicyReportTable(rows);
+      if (typeof init.activePoliciesCount === "number") {
+        updateActivePoliciesCount(init.activePoliciesCount);
       }
     }
 
-    // Cambio de franquicia: recargar resultados
+    // Si hay location inicial, actualizar Active Policies
+    if (PRL_CTX.locationId != null) {
+      fetchActivePoliciesCount(PRL_CTX.locationId);
+    }
+
+    // Cambiar franquicia: actualiza Active Policies de inmediato;
+    // el KPI de Binder se actualizará cuando recargues la tabla (Apply).
     $("#franchise-select").on("change", function () {
       PRL_CTX.locationId = $(this).val() || null;
-      $("#prl-apply").trigger("click");
+      fetchActivePoliciesCount(PRL_CTX.locationId);
     });
 
-    // Botón Apply
+    // Apply => refrescar tabla (y el KPI Binder se recalcula desde DataTable)
     $("#prl-apply").on("click", function () {
-      const startISO = formatDateISO($("#prl-start").val());
-      const endISO   = formatDateISO($("#prl-end").val());
-
-      const select = document.getElementById("franchise-select");
-      let locationId = select && select.value !== "" ? select.value : PRL_CTX.locationId;
-      PRL_CTX.locationId = locationId;
-
-      if (!startISO && !endISO) { fetchAndRenderPolicyReport(null, null, { all: true }); return; }
-      if (!startISO || !endISO)  { alert("Select both start and end dates"); return; }
-
-      const swap = new Date(startISO) > new Date(endISO);
-      const s = swap ? endISO : startISO;
-      const e = swap ? startISO : endISO;
-      fetchAndRenderPolicyReport(s, e);
-    });
-
-    flatpickr("#prl-start", {
-      dateFormat: "Y-m-d",
-      allowInput: true
-    });
-    flatpickr("#prl-end", {
-      dateFormat: "Y-m-d",
-      allowInput: true
+      const rawStart = $("#prl-start").val();
+      const rawEnd = $("#prl-end").val();
+      const startISO = formatDateISO(rawStart);
+      const endISO   = formatDateISO(rawEnd);
+      fetchAndRenderPolicyReport(startISO || null, endISO || null);
     });
   });
 })();

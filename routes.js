@@ -2,6 +2,13 @@ import express from "express";
 import passport from "passport";
 import { authenticate } from "./config/passportConfig.js";
 
+// Multer para manejar upload de archivos (importación de códigos)
+import multer from "multer";
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 } // 20MB
+});
+
 // ----- CONTROLADORES (AUTH) -----
 import {
   login,
@@ -133,10 +140,14 @@ import {
   renderPolicyReportByLocationView
 } from "./controllers/policy-report-by-location.js";
 
-// ----- CONTROLADORES (MISSING CONTACT ERRORS: email/phone) -----
+// ----- CONTROLADORES (MISSING CONTACT ERRORS: email/phone/invalid_email) -----
 import {
   fetchMissingContactErrors,
-  renderMissingContactErrorsView
+  renderMissingContactErrorsView,
+  verifyContactsEmails,
+  // IMPORTS para KPIs dinámicos por location:
+  fetchActiveClientsCount,
+  fetchMissingContactSummary
 } from "./controllers/missing-contact-errorsController.js";
 
 const router = express.Router();
@@ -322,7 +333,8 @@ router.post("/users/agents/set-auto-expiring-mail-recipients", renewalsAuth, set
 router.get("/users/codes", renewalsAuth, codesController.renderCodesPage);
 router.get("/users/codes/api", renewalsAuth, codesController.listCodes);
 router.get("/users/codes/export", renewalsAuth, codesController.exportCsv);
-router.post("/users/codes/import", renewalsAuth, codesController.importCodes);
+// Import con multer: el campo debe llamarse "file"
+router.post("/users/codes/import", renewalsAuth, upload.single("file"), codesController.importCodes);
 
 // FRANCHISE KPIS
 router.get("/franchise-kpis", checkNotAuthenticated, renderFranchiseKpisPanel);
@@ -342,9 +354,15 @@ router.get("/users/missing-csr-producer", renewalsAuth, scopeLocation, renderMis
 router.get("/api/policy-report-by-location", renewalsAuth, scopeLocation, fetchPolicyReportByLocation);
 router.get("/users/policy-report-by-location", renewalsAuth, scopeLocation, renderPolicyReportByLocationView);
 
-// MISSING CONTACT ERRORS
-router.get("/api/missing-contact-errors", renewalsAuth, scopeLocation, fetchMissingContactErrors);
+// MISSING CONTACT ERRORS (email/phone/invalid_email)
+// SSR para la vista
 router.get("/users/missing-contact-errors", renewalsAuth, scopeLocation, renderMissingContactErrorsView);
+// APIs de detalle/acción
+router.get("/api/missing-contact-errors", renewalsAuth, scopeLocation, fetchMissingContactErrors);
+router.post("/api/missing-contact-errors/verify", renewalsAuth, scopeLocation, verifyContactsEmails);
+// APIs KPI (para que cambien al cambiar location)
+router.get("/api/active-clients-count", renewalsAuth, scopeLocation, fetchActiveClientsCount);
+router.get("/api/missing-contact-errors/summary", renewalsAuth, scopeLocation, fetchMissingContactSummary);
 
 // GTI DIRECTORY
 router.use("/users/gtidirectory", gtiDirectoryRouter);

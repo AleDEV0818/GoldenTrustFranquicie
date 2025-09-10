@@ -3,11 +3,9 @@
   data-theme="theme-default" data-assets-path="/" data-template="vertical-menu-template">
 
 <head>
-
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Missing Contact Info | GTI</title>
-
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -28,119 +26,204 @@
   <link rel="stylesheet" href="/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
   <link rel="stylesheet" href="/vendor/libs/datatables-buttons/buttons.bootstrap5.css" />
 
-  <!-- Flatpickr (se mantiene por consistencia del layout, no se usa en esta vista) -->
+  <!-- Flatpickr Calendar -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
-  <style>
-    /* Solo botón Export CSV: estilos del botón */
-    .dataTables_wrapper .dt-buttons {
-      display: flex;
-      align-items: center;
-      gap: .4rem;
-      margin-bottom: .75rem;
-    }
-    .dataTables_wrapper .dt-buttons .dt-button,
-    .dataTables_wrapper .dt-buttons .btn {
-      padding: .35rem .7rem;
-      font-size: .85rem;
-      border-radius: .25rem !important;
-    }
-    .dataTables_wrapper .dt-buttons .btn-primary {
-      background-color: var(--bs-primary);
-      border-color: var(--bs-primary);
-      color: #fff;
-    }
-    .dataTables_wrapper .dt-buttons .btn.btn-primary.export-csv-btn {
-      background-color: var(--bs-primary);
-      border-color: var(--bs-primary);
-      color: #fff;
-    }
+<style>
 
-    /* =========================
-       Modal (reutilizable si lo necesitas más tarde)
-       ========================= */
-    #mcpRowDetailsModal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 1055;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    #mcpRowDetailsModal .modal-card {
-      background: var(--bs-body-bg);
-      color: var(--bs-body-color);
-      border: 1px solid var(--bs-border-color);
-      border-radius: 12px;
-      width: min(900px, 96vw);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-      overflow: hidden;
-    }
-    #mcpRowDetailsModal .modal-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 18px 22px;
-      border-bottom: 1px solid var(--bs-border-color);
-    }
-    #mcpRowDetailsModal .modal-body {
-      padding: 20px 22px;
-    }
-    #mcpRowDetailsModal .modal-footer {
-      padding: 14px 22px;
-      border-top: 1px solid var(--bs-border-color);
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-    #mcpRowDetailsModal .grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px 18px;
-    }
-    @media (max-width: 576px) {
-      #mcpRowDetailsModal .grid { grid-template-columns: 1fr; }
-    }
-    #mcpRowDetailsModal .item {
-      padding: 12px 14px;
-      border: 1px solid var(--bs-border-color);
-      border-radius: 10px;
-    }
-    #mcpRowDetailsModal .item .label {
-      font-size: 12px;
-      color: var(--bs-secondary-color);
-      text-transform: uppercase;
-      letter-spacing: .02em;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    #mcpRowDetailsModal .item .value {
-      font-size: 16px;
-      font-weight: 600;
-      margin-top: 6px;
-    }
+/* =========================
+   DataTables: Export CSV button (paridad con Policy Report by Location)
+   ========================= */
+.dataTables_wrapper .dt-buttons {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  margin-bottom: .75rem;
+}
+.dataTables_wrapper .dt-buttons .dt-button,
+.dataTables_wrapper .dt-buttons .btn {
+  padding: .35rem .7rem;
+  font-size: .85rem;
+  border-radius: .25rem !important;
+  cursor: pointer;
+}
+.dataTables_wrapper .dt-buttons .btn-primary,
+.dataTables_wrapper .dt-buttons .btn.btn-primary.export-csv-btn {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: #fff;
+}
 
-    /* Estilo de resaltado de la columna con dato faltante (inyectado también por JS) */
-    /* El JS agregará un <style id="missing-col-style"> con el nth-child correcto */
-  </style>
+/* =========================
+   Toolbar sobria y elegante (mismo estilo MCP)
+   ========================= */
+.filter-toolbar {
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+.ft-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.03);
+  min-height: 52px;
+}
+.ft-group.ft-apply { min-width: 160px; justify-content: center; }
+.ft-header { display: flex; align-items: center; gap: 8px; margin-right: 4px; }
+.ft-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 8px;
+  color: var(--bs-primary);
+  background: color-mix(in srgb, var(--bs-primary) 12%, transparent);
+}
+.ft-label { font-weight: 600; font-size: .9rem; letter-spacing: .01em; color: var(--bs-body-color); }
+.ft-body { display: inline-flex; align-items: center; gap: 8px; }
+.ft-sep { opacity: .65; font-size: .85rem; margin: 0 2px; }
+.ft-vr {
+  width: 1px; align-self: stretch;
+  background: linear-gradient(180deg, transparent 0%, var(--bs-border-color) 20%, var(--bs-border-color) 80%, transparent 100%);
+  margin: 0 2px;
+}
+
+/* =========================
+   Inputs sutiles
+   ========================= */
+.input-group-text {
+  background: var(--bs-body-bg);
+  border-color: var(--bs-border-color);
+  color: var(--bs-secondary-color);
+}
+.form-control, .form-select {
+  border-color: var(--bs-border-color);
+  background: var(--bs-body-bg);
+}
+.form-control:focus, .form-select:focus {
+  border-color: color-mix(in srgb, var(--bs-primary) 35%, var(--bs-border-color));
+  box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--bs-primary) 18%, transparent);
+}
+
+/* =========================
+   Botón Verify deshabilitado
+   ========================= */
+#mce-verify-btn:disabled,
+#mce-verify-btn.disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* =========================
+   Email: badges y contenido
+   ========================= */
+.email-cell { display: inline-flex; align-items: center; gap: .5rem; }
+.email-status-badge {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .12rem .5rem; border-radius: 999px; font-size: .75rem;
+  font-weight: 600; border: 1px solid transparent; white-space: nowrap; line-height: 1.1;
+}
+.email-status-badge i { font-size: .95em; line-height: 1; }
+.email-status-invalid { color: #b02a37; background-color: #f8d7da; border-color: #f1aeb5; }
+.email-status-unknown { color: #664d03; background-color: #fff3cd; border-color: #ffe69c; }
+.email-status-error { color: #842029; background-color: #f8d7da; border-color: #f1aeb5; }
+
+/* =========================
+   Marca SOLO la celda de Email con problema (no toda la fila)
+   ========================= */
+.email-problem-cell {
+  background-image: linear-gradient(to right, rgba(220, 53, 69, .06), transparent);
+}
+
+/* =========================
+   Bandera sutil junto al email problemático
+   ========================= */
+.email-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .1rem .4rem .1rem .6rem;
+  border-left: 3px solid var(--bs-border-color);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bs-danger) 4%, transparent);
+}
+
+/* Colores por estado */
+.email-flag--invalid,
+.email-flag--error {
+  border-left-color: #dc3545; /* rojo Bootstrap */
+  background: color-mix(in srgb, #dc3545 10%, transparent);
+}
+.email-flag--unknown {
+  border-left-color: #ffb400; /* ámbar */
+  background: color-mix(in srgb, #ffb400 10%, transparent);
+}
+
+/* Íconos por estado */
+.email-flag--invalid i,
+.email-flag--error i { color: #dc3545; }
+.email-flag--unknown i { color: #b98900; }
+
+/* Subrayado rojo sutil para invalid/error */
+.email-flag--invalid .email-text,
+.email-flag--error .email-text {
+  text-decoration: underline;
+  text-decoration-color: rgba(220,53,69,.85);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+/* =========================
+   Responsive
+   ========================= */
+@media (max-width: 992px) {
+  .ft-group { width: 100%; }
+  .ft-vr { display: none; }
+  .ft-group.ft-apply { min-width: unset; }
+}
+
+
+
+.kpi-bars { display:flex; gap:12px; flex-wrap:wrap; }
+  .kpi-bar { display:inline-flex; align-items:center; gap:14px; padding:12px 16px; border-radius:8px; width:auto; max-width:100%; }
+  .kpi-icon { width:42px; height:42px; min-width:42px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:22px; }
+  .kpi-content { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .kpi-label { font-size:1.05rem; font-weight:700; }
+  .kpi-value { font-size:1.5rem; font-weight:800; }
+
+  /* Azul */
+  .kpi--blue { border:1px solid rgba(13,110,253,0.35); background:rgba(13,110,253,0.06); }
+  .kpi--blue .kpi-icon  { background:rgba(13,110,253,0.12); color:#0b5ed7; }
+  .kpi--blue .kpi-label { color:#0b5ed7; }
+  .kpi--blue .kpi-value { color:#0b3d91; }
+
+  /* Rojo fuerte */
+  .kpi--red { border:1px solid rgba(220,53,69,0.35); background:rgba(220,53,69,0.06); }
+  .kpi--red .kpi-icon  { background:rgba(220,53,69,0.12); color:#dc3545; }
+  .kpi--red .kpi-label { color:#dc3545; }
+  .kpi--red .kpi-value { color:#b02a37; }
+
+  /* Rojo tenue */
+  .kpi--red-soft { border:1px solid rgba(220,53,69,0.25); background:rgba(220,53,69,0.04); }
+  .kpi--red-soft .kpi-icon  { background:rgba(220,53,69,0.08); color:#c23945; }
+  .kpi--red-soft .kpi-label { color:#c23945; }
+  .kpi--red-soft .kpi-value { color:#8f2a34; }
+
+</style>
 
 </head>
 
+
 <body>
   <div class="layout-wrapper layout-content-navbar">
-    <!-- Layout container -->
     <div class="layout-container">
       <!-- Menu -->
-
       <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
         <div class="app-brand demo">
           <a href="/users/agencie" class="app-brand-link">
-            <!--<span class="app-brand-logo">
-              <img src="/img/branding/gt.png" alt="">
-            </span>-->
             <span class="app-brand-text">
               <img src="/img/branding/gti_logo1.png" alt="" id="menuLogo">
             </span>
@@ -154,12 +237,6 @@
         <div class="menu-inner-shadow"></div>
 
         <ul class="menu-inner py-1">
-        
-
-             <!-- / Menu -->
-    
-        <!-- Dashboard -->
-
           <li class="menu-item ">
             <a href="/users/dashboard" class="menu-link">
               <i class="menu-icon tf-icons ti ti-smart-home"></i>
@@ -167,168 +244,130 @@
             </a>
           </li>
 
-         <li class="menu-item">
-  <a href="/users/statistics/policies" class="menu-link">
-    <i class="menu-icon tf-icons ti ti-chart-bar"></i>
-    <div data-i18n="Stats">Stats</div>
-  </a>
- </li>
-
-
- <li class="menu-header small text-uppercase">
-            <span class="menu-header-text" data-i18n="Sales">Sales</span>
-
-
-          
-                          <li class="menu-item ">
-                  <a href="/users/agency" class="menu-link">
-                  <i class="menu-icon tf-icons ti ti-home-heart"></i>
-           <div data-i18n="Agencies">Agencies</div>
-           </a>
-                  </li>
-
-
-   <li class="menu-header small text-uppercase">
-            <span class="menu-header-text" data-i18n="APPS">APPS</span>
-
-
-                
-<li class="menu-item">
-  <a href="/users/renewals/agency-upcoming-renewals" class="menu-link">
-    <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
-    <div data-i18n="Renewals">Renewals</div>
-  </a>
-</li>
-
-
-      <li class="menu-item">
-  <a href="/users/licensed-agents" class="menu-link">
-    <i class="menu-icon tf-icons ti ti-id"></i>
-    <div data-i18n="Licensee Details">Licensee Details</div>
-  </a>
-</li>
-                
-
- <li class="menu-header small text-uppercase">
-            <span class="menu-header-text" data-i18n="MARKETING">MARKETING</span>
-
-<li class="menu-item">
-  <a href="/users/renewals/message-center" class="menu-link">
-    <i class="menu-icon tf-icons ti ti-speakerphone"></i> 
-    <div data-i18n="Message Center">Message Center</div>
-  </a>
-</li>
-
-  
           <li class="menu-item">
-         <a href="/users/gtidirectory" class="menu-link">
-        <i class="menu-icon tf-icons ti ti-address-book"></i>
-          <div data-i18n="GTI Directory">GTI Directory</div>
+            <a href="/users/statistics/policies" class="menu-link">
+              <i class="menu-icon tf-icons ti ti-chart-bar"></i>
+              <div data-i18n="Stats">Stats</div>
+            </a>
+          </li>
+
+          <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="Sales">Sales</span>
+          </li>
+
+          <li class="menu-item ">
+            <a href="/users/agency" class="menu-link">
+              <i class="menu-icon tf-icons ti ti-home-heart"></i>
+              <div data-i18n="Agencies">Agencies</div>
+            </a>
+          </li>
+
+          <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="APPS">APPS</span>
+          </li>
+
+          <li class="menu-item">
+            <a href="/users/renewals/agency-upcoming-renewals" class="menu-link">
+              <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
+              <div data-i18n="Renewals">Renewals</div>
+            </a>
+          </li>
+
+          <li class="menu-item">
+            <a href="/users/licensed-agents" class="menu-link">
+              <i class="menu-icon tf-icons ti ti-id"></i>
+              <div data-i18n="Licensee Details">Licensee Details</div>
+            </a>
+          </li>
+
+          <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="MARKETING">MARKETING</span>
+          </li>
+
+          <li class="menu-item">
+            <a href="/users/renewals/message-center" class="menu-link">
+              <i class="menu-icon tf-icons ti ti-speakerphone"></i>
+              <div data-i18n="Message Center">Message Center</div>
+            </a>
+          </li>
+
+          <li class="menu-item">
+            <a href="/users/gtidirectory" class="menu-link">
+              <i class="menu-icon tf-icons ti ti-address-book"></i>
+              <div data-i18n="GTI Directory">GTI Directory</div>
+            </a>
+          </li>
+
+          <li class="menu-item">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+              <i class="menu-icon tf-icons ti ti-device-tv"></i>
+              <div data-i18n="TV">TV</div>
+            </a>
+            <ul class="menu-sub">
+              <li class="menu-item">
+                <a href="/televisor/totals" class="menu-link">
+                  <div data-i18n="New Business">New Business</div>
+                </a>
+              </li>
+              <li class="menu-item">
+                <a href="/televisor-renewed/totals" class="menu-link">
+                  <div data-i18n="Renewals">Renewals</div>
+                </a>
+              </li>
+              <% if (user && user.location_type === 1) { %>
+              <li class="menu-item">
+                <a href="/api/franchise/render" class="menu-link">
+                  <div data-i18n="Franchise TV">Franchise TV</div>
+                </a>
+              </li>
+              <% } %>
+            </ul>
+          </li>
+
+          <!-- ADMIN -->
+          <% if (user && user.location_type === 1 && user.department && user.department.trim() === "Marketing & IT") { %>
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text" data-i18n="ADMIN">ADMIN</span>
+            </li>
+            <li class="menu-item">
+              <a href="/users/config/headcarriers" class="menu-link">
+                <i class="menu-icon tf-icons ti ti-settings-check"></i>
+                <div data-i18n="Config">Config</div>
               </a>
-                  </li>
+            </li>
+            <li class="menu-item">
+              <a href="/users/codes" class="menu-link">
+                <i class="menu-icon tf-icons ti ti-key"></i>
+                <div data-i18n="Carries Codes">Carries Codes</div>
+              </a>
+            </li>
+          <% } %>
 
-       
+          <li class="menu-header small text-uppercase">
+            <span class="menu-header-text" data-i18n="FRANCHISE">FRANCHISE</span>
+          </li>
 
-<li class="menu-item">
-  <a href="javascript:void(0);" class="menu-link menu-toggle">
-    <i class="menu-icon tf-icons ti ti-device-tv"></i>
-    <div data-i18n="TV">TV</div>
-  </a>
-  <ul class="menu-sub">
-    <li class="menu-item">
-      <a href="/televisor/totals" class="menu-link">
-        <div data-i18n="New Business">New Business</div>
-      </a>
-    </li>
-    <li class="menu-item">
-      <a href="/televisor-renewed/totals" class="menu-link">
-        <div data-i18n="Renewals">Renewals</div>
-      </a>
-    </li>
- <% if (user && user.location_type === 1) { %>
-  <li class="menu-item">
-    <a href="/api/franchise/render" class="menu-link">
-      <div data-i18n="Franchise TV">Franchise TV</div>
-    </a>
-  </li>
-<% } %>
-  </ul>
-</li>
+          <li class="menu-item">
+            <a href="/franchise-kpis" class="menu-link">
+              <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
+              <div data-i18n="Renewals">Renewals</div>
+            </a>
+          </li>
 
-
- 
-
-          <!-- ////////////////ADMIN/////////////////////// -->
- <% if (user && user.location_type === 1 && user.department && user.department.trim() === "Marketing & IT") { %>  
-  <li class="menu-header small text-uppercase">
-    <span class="menu-header-text" data-i18n="ADMIN">ADMIN</span>
-  </li>
-  <li class="menu-item">
-    <a href="/users/config/headcarriers" class="menu-link">
-      <i class="menu-icon tf-icons ti ti-settings-check"></i>
-      <div data-i18n="Config">Config</div>
-    </a>
-  </li>
-
-
-
-<li class="menu-item">
-  <a href="/users/codes" class="menu-link">
-    <i class="menu-icon tf-icons ti ti-key"></i>
-    <div data-i18n="Carries Codes">Carries Codes</div>
-  </a>
-</li>
-
-      
-<% } %>
-
-          
- <%
-  const path = (typeof currentPath === 'string') ? currentPath : '';
-  const canSeeFK = (typeof canSeeFranchiseSection !== 'undefined')
-    ? canSeeFranchiseSection
-    : (user && (user.location_type === 1 || (user.department && user.department.trim() === 'Marketing & IT')));
-%>
-
-<% if (canSeeFK) { %>
-  <li class="menu-header small text-uppercase">
-    <span class="menu-header-text" data-i18n="FRANCHISE">FRANCHISE</span>
-  </li>
-
-  <li class="menu-item <%= path.startsWith('/franchise-kpis') ? 'active' : '' %>">
-    <a href="/franchise-kpis" class="menu-link">
-      <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
-      <div data-i18n="Renewals">Renewals</div>
-    </a>
-  </li>
-
-
-
-  <li class="menu-item active <%= path.startsWith('/franchise-errors') ? 'active' : '' %>">
-    <a href="/franchise-errors" class="menu-link">
-      <i class="menu-icon tf-icons ti ti-alert-triangle"></i>
-      <div data-i18n="Errors">Errors</div>
-    </a>
-  </li>
-
-
-
-
-
-   <% } %>  
+          <li class="menu-item active">
+            <a href="/franchise-errors" class="menu-link">
+              <i class="menu-icon tf-icons ti ti-alert-triangle"></i>
+              <div data-i18n="Errors">Errors</div>
+            </a>
+          </li>
         </ul>
-
       </aside>
-
       <!-- / Menu -->
 
       <!-- Layout page -->
       <div class="layout-page">
         <!-- Navbar -->
-
-        <nav
-          class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
-          id="layout-navbar">
+        <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
           <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
             <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
               <i class="ti ti-menu-2 ti-sm"></i>
@@ -336,9 +375,6 @@
           </div>
 
           <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
-
-
-            <!-- Search -->
             <div class="navbar-nav align-items-center">
               <div class="nav-item navbar-search-wrapper mb-0">
                 <a class="nav-item nav-link search-toggler d-flex align-items-center px-0" href="javascript:void(0);">
@@ -347,286 +383,357 @@
                 </a>
               </div>
             </div>
-            <!-- /Search -->
 
             <ul class="navbar-nav flex-row align-items-center ms-auto">
-
-              <!-- Style Switcher -->
               <li class="nav-item dropdown-style-switcher dropdown me-2 me-xl-0">
                 <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
                   <i class="ti ti-md"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end dropdown-styles">
+                  <li><a class="dropdown-item" href="javascript:void(0);" data-theme="light"><span class="align-middle"><i class="ti ti-sun me-2"></i>Light</span></a></li>
+                  <li><a class="dropdown-item" href="javascript:void(0);" data-theme="dark"><span class="align-middle"><i class="ti ti-moon me-2"></i>Dark</span></a></li>
+                  <li><a class="dropdown-item" href="javascript:void(0);" data-theme="system"><span class="align-middle"><i class="ti ti-device-desktop me-2"></i>System</span></a></li>
+                </ul>
+              </li>
+
+              <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                  <div class="avatar avatar-online">
+                    <img src="/img/avatars/users/<%=user.user_id%>.png" alt class="h-auto rounded-circle" />
+                  </div>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
                   <li>
-                    <a class="dropdown-item" href="javascript:void(0);" data-theme="light">
-                      <span class="align-middle"><i class="ti ti-sun me-2"></i>Light</span>
+                    <a class="dropdown-item" href="pages-account-settings-account.html">
+                      <div class="d-flex">
+                        <div class="flex-shrink-0 me-3">
+                          <div class="avatar avatar-online">
+                            <img src="/img/avatars/users/<%=user.user_id%>.png" alt class="h-auto rounded-circle" />
+                          </div>
+                        </div>
+                        <div class="flex-grow-1">
+                          <span class="fw-medium d-block"><%= user.display_name %></span>
+                          <small class="text-muted"><%=user.job_title%></small>
+                        </div>
+                      </div>
                     </a>
                   </li>
+                  <li><div class="dropdown-divider"></div></li>
                   <li>
-                    <a class="dropdown-item" href="javascript:void(0);" data-theme="dark">
-                      <span class="align-middle"><i class="ti ti-moon me-2"></i>Dark</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a class="dropdown-item" href="javascript:void(0);" data-theme="system">
-                      <span class="align-middle"><i class="ti ti-device-desktop me-2"></i>System</span>
+                    <a class="dropdown-item" href="/users/logout">
+                      <i class="ti ti-logout me-2 ti-sm"></i>
+                      <span class="align-middle">Log Out</span>
                     </a>
                   </li>
                 </ul>
               </li>
-
-              <!-- Notification -->
-              <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-1">
-                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown"
-                  data-bs-auto-close="outside" aria-expanded="false">
-                  <i class="ti ti-bell ti-md"></i>
-                  <!--<span class="badge bg-danger rounded-pill badge-notifications">5</span>-->
-                </a>
-
-                <ul class="dropdown-menu dropdown-menu-end py-0">
-                  <li class="dropdown-menu-header border-bottom">
-                    <div class="dropdown-header d-flex align-items-center py-3">
-                      <h5 class="text-body mb-0 me-auto">Notification</h5>
-                      <a href="javascript:void(0)" class="dropdown-notifications-all text-body" data-bs-toggle="tooltip"
-                        data-bs-placement="top" title="Mark all as read"><i class="ti ti-mail-opened fs-4"></i></a>
-                    </div>
-                  </li>
-              </li>
-              <li class="dropdown-menu-footer border-top">
-                <a href="javascript:void(0);"
-                  class="dropdown-item d-flex justify-content-center text-primary p-2 h-px-40 mb-1 align-items-center">
-                  View all notifications
-                </a>
-              </li>
             </ul>
-            </li>
-            <!--/ Notification -->
 
-            <!-- User -->
-            <li class="nav-item navbar-dropdown dropdown-user dropdown">
-              <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
-                <div class="avatar avatar-online">
-                  <img src="/img/avatars/users/<%=user.user_id%>.png" alt class="h-auto rounded-circle" />
-                </div>
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li>
-                  <a class="dropdown-item" href="pages-account-settings-account.html">
-                    <div class="d-flex">
-                      <div class="flex-shrink-0 me-3">
-                        <div class="avatar avatar-online">
-                          <img src="/img/avatars/users/<%=user.user_id%>.png" alt class="h-auto rounded-circle" />
-                        </div>
-                      </div>
-                      <div class="flex-grow-1">
-                        <span class="fw-medium d-block">
-                          <%= user.display_name %>
-                        </span>
-                        <small class="text-muted">
-                          <%=user.job_title%>
-                        </small>
-                      </div>
-                    </div>
-                  </a>
-                </li>
-                <li>
-                  <div class="dropdown-divider"></div>
-                </li>
-                <li>
-                  <a class="dropdown-item" href="/users/logout"> <!-- target="_blank" -->
-                    <i class="ti ti-logout me-2 ti-sm"></i>
-                    <span class="align-middle">Log Out</span>
-                  </a>
-                </li>
-              </ul>
-            </li>
-            <!--/ User -->
-            </ul>
-          </div>
-
-          <!-- Search Small Screens -->
-          <div class="navbar-search-wrapper search-input-wrapper d-none">
-            <input type="text" class="form-control search-input container-xxl border-0" placeholder="Search..."
-              aria-label="Search..." />
-            <i class="ti ti-x ti-sm search-toggler cursor-pointer"></i>
+            <div class="navbar-search-wrapper search-input-wrapper d-none">
+              <input type="text" class="form-control search-input container-xxl border-0" placeholder="Search..." aria-label="Search..." />
+              <i class="ti ti-x ti-sm search-toggler cursor-pointer"></i>
+            </div>
           </div>
         </nav>
-
         <!-- / Navbar -->
-        <!-- Content -->
-          <div class="my-3"></div>
-          
+
+  <!-- Content -->
+<div class="my-3"></div>
+
 <ul class="nav nav-pills flex-column flex-md-row mb-4 mx-2 mx-md-4">
-
   <li class="nav-item">
-    <a
-      class="nav-link <%= (currentPath || '').startsWith('/users/policy-report-by-location') ? 'active' : '' %>"
-      href="/users/policy-report-by-location<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>"
-    >
-      <i class="ti ti-report ti-xs me-1"></i>
-      Policy Report
+    <a class="nav-link <%= (currentPath || '').startsWith('/users/policy-report-by-location') ? 'active' : '' %>"
+       href="/users/policy-report-by-location<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>">
+      <i class="ti ti-report ti-xs me-1"></i> Binder Errors
     </a>
   </li>
-
   <li class="nav-item">
-    <a
-      class="nav-link <%= (currentPath || '').startsWith('/users/missing-csr-producer') ? 'active' : '' %>"
-      href="/users/missing-csr-producer<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>"
-    >
-      <i class="ti ti-user-exclamation ti-xs me-1"></i>
-      Missing CSR/Producer
+    <a class="nav-link <%= (currentPath || '').startsWith('/users/missing-csr-producer') ? 'active' : '' %>"
+       href="/users/missing-csr-producer<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>">
+      <i class="ti ti-user-exclamation ti-xs me-1"></i> Missing CSR/Producer
     </a>
   </li>
-
   <li class="nav-item">
-    <a
-      class="nav-link <%= (currentPath || '').startsWith('/users/missing-contact-errors') ? 'active' : '' %>"
-      href="/users/missing-contact-errors<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>"
-    >
-      <i class="ti ti-mail-x ti-xs me-1"></i>
-      Missing Contact Info
+    <a class="nav-link <%= (currentPath || '').startsWith('/users/missing-contact-errors') ? 'active' : '' %>"
+       href="/users/missing-contact-errors<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>">
+      <i class="ti ti-mail-x ti-xs me-1"></i> Missing Contact Info
     </a>
   </li>
-
-
 </ul>
-
-<!-- Selector de tipo (Email/Phone) + franquicia/location o alias -->
+<!-- Missing Contact Errors – Filtros (diseño sobrio con íconos).
+     Incluye: Show (tipo), Location (franquicia o alias fijo) y Verify (solo Invalid Email). -->
 <div class="mx-2 mx-md-4 mb-4">
-  <div class="card shadow">
-    <div class="card-body">
-      <div class="d-flex flex-wrap align-items-center gap-2">
-        <!-- Agrupa ambos selects en la misma línea -->
-        <div class="d-flex align-items-center gap-2">
-          <label for="mce-error-type" class="form-label mb-0">Show</label>
-          <select id="mce-error-type" class="form-select" style="min-width:220px;">
-            <option value="email" <%= (type === 'email') ? 'selected' : '' %>>Customers without Email</option>
-            <option value="phone" <%= (type === 'phone') ? 'selected' : '' %>>Customers without Phone</option>
-          </select>
-          <% if (user.location_type === 1 && Array.isArray(franchises) && franchises.length > 0) { %>
-            <% var selectedId = typeof locationId !== 'undefined' ? locationId : ""; %>
-            <label for="location-select" class="form-label mb-0 ms-3">Location</label>
-            <select id="location-select" class="form-select form-select-sm"
-                    style="min-width:160px; max-width:180px;">
-              <% franchises.forEach(function(franchise) { %>
-                <option value="<%= franchise.location_id %>" <%= String(franchise.location_id) === String(selectedId) ? 'selected' : '' %>>
-                  <%= franchise.alias %>
-                </option>
-              <% }); %>
+  <div class="filter-toolbar shadow-sm">
+    <div class="d-flex flex-wrap align-items-stretch gap-3">
+
+      <!-- Grupo: Show (tipo de reporte) -->
+      <div class="ft-group">
+        <div class="ft-header">
+          <span class="ft-icon" aria-hidden="true"><i class="ti ti-list-search"></i></span>
+          <span class="ft-label">Show</span>
+        </div>
+        <div class="ft-body">
+          <div class="input-group input-group-sm" style="min-width: 240px;">
+            <span class="input-group-text"><i class="ti ti-filter"></i></span>
+            <select id="mce-error-type" class="form-select" aria-label="Report type">
+              <option value="email" <%= (type === 'email') ? 'selected' : '' %>>Customers without Email</option>
+              <option value="phone" <%= (type === 'phone') ? 'selected' : '' %>>Customers without Phone</option>
+              <option value="invalid_email" <%= (type === 'invalid_email') ? 'selected' : '' %>>Customers with Invalid Email</option>
             </select>
-          <% } else { %>
-            <span class="text-muted ms-3">
-              <small>
-                Location:
-                <span id="mce-location-alias"><%= locationAlias || '—' %></span>
-              </small>
+          </div>
+        </div>
+      </div>
+
+      <div class="ft-vr" aria-hidden="true"></div>
+
+      <!-- Grupo: Location (Franchise) -->
+      <% if (user.location_type === 1 && Array.isArray(franchises) && franchises.length > 0) { %>
+        <div class="ft-group">
+          <div class="ft-header">
+            <span class="ft-icon" aria-hidden="true"><i class="ti ti-building-store"></i></span>
+            <span class="ft-label">Location</span>
+          </div>
+          <div class="ft-body">
+            <div class="input-group input-group-sm" style="min-width: 220px;">
+              <span class="input-group-text"><i class="ti ti-map-pin"></i></span>
+              <% var selectedId = typeof locationId !== 'undefined' ? locationId : ""; %>
+              <select id="location-select" class="form-select" aria-label="Location">
+                <% franchises.forEach(function(franchise) { %>
+                  <option value="<%= franchise.location_id %>" <%= String(franchise.location_id) === String(selectedId) ? 'selected' : '' %>>
+                    <%= franchise.alias %>
+                  </option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="ft-group">
+          <div class="ft-header">
+            <span class="ft-icon" aria-hidden="true"><i class="ti ti-building"></i></span>
+            <span class="ft-label">Location</span>
+          </div>
+          <div class="ft-body">
+            <span class="badge bg-secondary-subtle text-secondary-emphasis">
+              <i class="ti ti-map-pin me-1"></i>
+              <span id="mce-location-alias"><%= locationAlias || '—' %></span>
             </span>
-          <% } %>
+          </div>
+        </div>
+      <% } %>
+
+      <div class="ft-vr" aria-hidden="true"></div>
+
+      <!-- Grupo: Verify (solo visible para Customers with Invalid Email) -->
+      <div class="ft-group ft-apply" id="mce-verify-group">
+        <div class="ft-body w-100">
+          <button id="mce-verify-btn" type="button" class="btn btn-primary btn-sm w-100" disabled title="Select a location to enable verification">
+            <i class="ti ti-mail-check me-1"></i> Verify
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="mx-2 mx-md-4 mt-2">
+  <div class="kpi-bars" role="region" aria-label="Summary KPIs">
+    <!-- Azul: Active Clients -->
+    <div class="kpi-bar kpi--blue" role="status" aria-live="polite">
+      <div class="kpi-icon" aria-hidden="true"><i class="ti ti-users"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Active Clients</div>
+        <div class="kpi-value" id="mce-active-clients-count">
+          <%= typeof activeClientsCount === 'number' ? activeClientsCount.toLocaleString('en-US') : '0' %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rojo fuerte: Contact Errors (suma de todas las categorías) -->
+    <div class="kpi-bar kpi--red" role="status" aria-live="polite">
+      <div class="kpi-icon" aria-hidden="true"><i class="ti ti-alert-triangle"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Contact Errors</div>
+        <div class="kpi-value" id="mce-contact-errors-total">
+          <%= typeof totalContactErrors === 'number' ? totalContactErrors.toLocaleString('en-US') : '0' %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rojo tenue: Selected Errors (según desplegable) -->
+    <div class="kpi-bar kpi--red-soft" role="status" aria-live="polite">
+      <div class="kpi-icon" aria-hidden="true"><i class="ti ti-alert-small"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">
+          <span id="mce-selected-kind-label">
+            <%= (function(kind){ if(kind==='phone') return 'Without Phone'; if(kind==='invalid_email') return 'Invalid Email'; return 'Without Email'; })(type) %>
+          </span>
+        </div>
+        <div class="kpi-value" id="mce-selected-errors-count">
+          <% 
+            const sel =
+              type === 'phone' ? phoneMissing :
+              type === 'invalid_email' ? invalidEmail :
+              emailMissing;
+          %>
+          <%= typeof sel === 'number' ? sel.toLocaleString('en-US') : '0' %>
         </div>
       </div>
     </div>
   </div>
 </div>
-        <!-- Tabla -->
-        <div class="mx-2 mx-md-4 my-4">
-          <div class="card shadow">
-            <div class="card-body">
-              <div class="table-responsive">
-                <table
-                  class="datatable-missing-contact-errors table table-striped table-bordered align-middle mb-0"
-                  style="width:100%;"
-                >
-                  <thead>
-                    <tr>
-                      <th>Customer ID</th>
-                      <th>Customer</th>
-                      <th>Location</th>
-                      <th>Type</th>
-                      <th>Email</th>
-                      <th>Phone</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% (initialRows || []).forEach(r => { %>
-                      <tr>
-                        <td><%= r.customer_id %></td>
-                        <td><%= r.customer_display_name || '' %></td>
-                        <td><%= r.location_alias || '' %></td>
-                        <td><%= r.type_display || '' %></td>
-                        <td><%= r.email || '' %></td>
-                        <td><%= r.phone || '' %></td>
-                      </tr>
-                    <% }) %>
-                  </tbody>
-                </table>
-              </div>
-              <!-- El botón Export CSV lo inserta DataTables -->
-            </div>
-          </div>
-        </div>
 
-        <footer class="content-footer footer bg-footer-theme">
-          <div class="container-xxl">
-            <div class="footer-container d-flex align-items-center justify-content-between py-2 flex-md-row flex-column">
-              <div>
-                <script>document.write(new Date().getFullYear());</script>, &nbsp;
-                <a href="https://goldentrust.com" target="_blank" class="footer-link text-primary fw-medium">
-                  GTI | Marketing & IT Department
-                </a>
-              </div>
-              <div class="d-none d-lg-inline-block">
-                <a href="https://goldentrust.com" class="footer-link me-4" target="_blank">GoldenTrust.com</a>
-                <a href="https://admin.goldensoft.pro" target="_blank" class="footer-link me-4">CRM</a>
-                <a href="https://365.goldentrustinsurance.com" target="_blank" class="footer-link me-4">Email</a>
-                <a href="https://internal.goldentrustinsurance.com" target="_blank" class="footer-link me-4">Intranet</a>
-              </div>
-            </div>
-          </div>
-        </footer>
-        <div class="content-backdrop fade"></div>
+<!-- Leyenda de estados (solo cuando se muestra invalid_email) -->
+<% if (type === "invalid_email") { %>
+  <div class="mx-2 mx-md-4 mb-2">
+    <div class="small text-muted d-flex align-items-center gap-3">
+      <span class="email-status-badge email-status-invalid">
+        <i class="ti ti-x-circle"></i> Invalid
+      </span>
+      <span class="email-status-badge email-status-unknown">
+        <i class="ti ti-help-circle"></i> Unknown
+      </span>
+      <span class="email-status-badge email-status-error">
+        <i class="ti ti-alert-triangle"></i> Error
+      </span>
+    </div>
+  </div>
+<% } %>
+
+<!-- Missing Contact Errors – Tabla (marca solo la columna Email cuando NO es OK) -->
+<div class="mx-2 mx-md-4 my-4">
+  <div class="card shadow">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="datatable-missing-contact-errors table table-striped table-bordered align-middle mb-0" style="width:100%;">
+          <thead>
+            <tr>
+              <th class="text-nowrap"><i class="ti ti-id-badge me-1 text-secondary"></i> Customer ID</th>
+              <th class="text-nowrap"><i class="ti ti-user me-1 text-secondary"></i> Customer</th>
+              <th class="text-nowrap"><i class="ti ti-building me-1 text-secondary"></i> Location</th>
+              <th class="text-nowrap"><i class="ti ti-tag me-1 text-secondary"></i> Type</th>
+              <th class="text-nowrap"><i class="ti ti-mail me-1 text-secondary"></i> Email</th>
+              <th class="text-nowrap"><i class="ti ti-phone me-1 text-secondary"></i> Phone</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% (initialRows || []).forEach(r => {
+                 // Normaliza estado
+                 const rawSt = (r.email_status ?? r.email_state ?? r.verify_status ?? r.validation_status ?? r.status ?? '');
+                 let st = String(rawSt).toLowerCase().trim().replaceAll('_',' ').replace(/\s+/g,' ');
+                 if (!st && type === 'invalid_email') st = 'invalid'; // fallback para esa vista
+                 const isOk = (st === 'ok' || st === 'ok for all');
+                 const isProblem = !!st && !isOk;
+
+                 const flagClass = (st === 'invalid' || st === 'error') ? 'email-flag--error'
+                                  : (st === 'unknown') ? 'email-flag--unknown'
+                                  : 'email-flag--error';
+                 const flagTitle = (st === 'invalid') ? 'Invalid email'
+                                  : (st === 'unknown') ? 'Unknown validity'
+                                  : (st === 'error') ? 'Verification error'
+                                  : 'Not OK';
+                 const flagIcon  = (st === 'invalid') ? 'ti ti-x-circle'
+                                  : (st === 'unknown') ? 'ti ti-help-circle'
+                                  : (st === 'error') ? 'ti ti-alert-triangle'
+                                  : 'ti ti-x';
+
+                 const badgeHTML =
+                   st === 'invalid'
+                     ? '<span class="email-status-badge email-status-invalid" title="Invalid email"><i class="ti ti-x-circle"></i> Invalid</span>'
+                     : st === 'unknown'
+                       ? '<span class="email-status-badge email-status-unknown" title="Unknown validity"><i class="ti ti-help-circle"></i> Unknown</span>'
+                       : st === 'error'
+                         ? '<span class="email-status-badge email-status-error" title="Verification error"><i class="ti ti-alert-triangle"></i> Error</span>'
+                         : (!isOk ? '<span class="email-status-badge email-status-error" title="Not OK"><i class="ti ti-x"></i> Not OK</span>' : '');
+            %>
+              <tr>
+                <td class="text-nowrap"><%= r.customer_id %></td>
+                <td class="text-nowrap"><%= r.customer_display_name || '' %></td>
+                <td class="text-nowrap"><%= r.location_alias || '' %></td>
+                <td class="text-nowrap"><%= r.type_display || '' %></td>
+                <td class="text-nowrap <%= isProblem ? 'email-problem-cell' : '' %>">
+                  <% if (isProblem) { %>
+                    <span class="email-cell">
+                      <span class="email-flag <%= flagClass %>" title="<%= flagTitle %>">
+                        <i class="<%= flagIcon %> me-1"></i>
+                        <span class="email-text"><%= r.email || '' %></span>
+                      </span>
+                      <%- badgeHTML %>
+                    </span>
+                  <% } else { %>
+                    <%= r.email || '' %>
+                  <% } %>
+                </td>
+                <td class="text-nowrap"><%= r.phone || '' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
+</div>
 
-<!-- Core JS -->
-<script src="/vendor/libs/jquery/jquery.js"></script>
-<script src="/vendor/libs/popper/popper.js"></script>
-<script src="/vendor/js/bootstrap.js"></script>
-<script src="/vendor/libs/node-waves/node-waves.js"></script>
-<script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
-<script src="/vendor/libs/i18n/i18n.js"></script>
+<footer class="content-footer footer bg-footer-theme">
+  <div class="container-xxl">
+    <div class="footer-container d-flex align-items-center justify-content-between py-2 flex-md-row flex-column">
+      <div>
+        <script>document.write(new Date().getFullYear());</script>, &nbsp;
+        <a href="https://goldentrust.com" target="_blank" class="footer-link text-primary fw-medium">
+          GTI | Marketing & IT Department
+        </a>
+      </div>
+      <div class="d-none d-lg-inline-block">
+        <a href="https://goldentrust.com" class="footer-link me-4" target="_blank">GoldenTrust.com</a>
+        <a href="https://admin.goldensoft.pro" target="_blank" class="footer-link me-4">CRM</a>
+        <a href="https://365.goldentrustinsurance.com" target="_blank" class="footer-link me-4">Email</a>
+        <a href="https://internal.goldentrustinsurance.com" target="_blank" class="footer-link me-4">Intranet</a>
+      </div>
+    </div>
+  </div>
+</footer>
+<div class="content-backdrop fade"></div>
 
-<!-- Estos archivos definen variables usadas por main.js -->
-<script src="/vendor/js/helpers.js"></script>
-<script src="/vendor/js/template-customizer.js"></script>
-<script src="/js/config.js"></script>
+<!-- Inyección de estado inicial para el JS -->
+<script>
+  window.__MCE__ = {
+    locationId: <%- JSON.stringify(locationId) %>,
+    type: <%- JSON.stringify(type) %>
+  };
+</script>
 
-<!-- Typeahead (si tu main lo usa para el buscador) -->
-<script src="/vendor/libs/typeahead-js/typeahead.js"></script>
-<script>if (!$.fn.typeahead) { $.fn.typeahead = function(){ return this; }; }</script>
+  <!-- Core JS -->
+  <script src="/vendor/libs/jquery/jquery.js"></script>
+  <script src="/vendor/libs/popper/popper.js"></script>
+  <script src="/vendor/js/bootstrap.js"></script>
+  <script src="/vendor/libs/node-waves/node-waves.js"></script>
+  <script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+  <script src="/vendor/libs/i18n/i18n.js"></script>
 
-<script src="/vendor/js/menu.js"></script>
+  <script src="/vendor/js/helpers.js"></script>
+  <script src="/vendor/js/template-customizer.js"></script>
+  <script src="/js/config.js"></script>
 
-<!-- DataTables core (Bootstrap 5 integration) -->
-<script src="/vendor/libs/datatables-bs5/datatables-bootstrap5.js"></script>
+  <script src="/vendor/libs/typeahead-js/typeahead.js"></script>
+  <script>if (!$.fn.typeahead) { $.fn.typeahead = function(){ return this; }; }</script>
 
-<!-- DataTables: extensiones para Export CSV y Responsive -->
-<script src="/vendor/libs/jszip/jszip.min.js"></script>
-<script src="/vendor/libs/datatables-buttons/dataTables.buttons.min.js"></script>
-<script src="/vendor/libs/datatables-buttons/buttons.html5.min.js"></script>
-<script src="/vendor/libs/datatables-buttons/buttons.bootstrap5.min.js"></script>
-<script src="/vendor/libs/datatables-responsive-bs5/responsive-bootstrap5.js"></script>
+  <script src="/vendor/js/menu.js"></script>
 
-<script src="/js/date.js"></script>
+  <!-- DataTables core (Bootstrap 5 integration) -->
+  <script src="/vendor/libs/datatables-bs5/datatables-bootstrap5.js"></script>
 
-<!-- JS global del tema -->
-<script src="/js/main.js"></script>
+  <!-- DataTables: extensiones para Export CSV y Responsive -->
+  <script src="/vendor/libs/jszip/jszip.min.js"></script>
+  <script src="/vendor/libs/datatables-buttons/dataTables.buttons.min.js"></script>
+  <script src="/vendor/libs/datatables-buttons/buttons.html5.min.js"></script>
+  <script src="/vendor/libs/datatables-buttons/buttons.bootstrap5.min.js"></script>
+  <script src="/vendor/libs/datatables-responsive-bs5/responsive-bootstrap5.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
+  <script src="/js/date.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
   <script src="/js/missing-contact-errors.js"></script>
-
 </body>
-
 </html>

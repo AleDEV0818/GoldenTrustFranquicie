@@ -1,17 +1,11 @@
 "use strict";
 
 /**
- * Missing CSR/Producer screen script (aislado en IIFE para evitar globals).
- * - DataTable con modal de detalles por fila
- * - Mantiene contexto ?location,&start,&end en navegación
- * - Sin reinit de DataTables (guard + destroy)
- * - Alias: SE MANTIENE la detección, pero NO se muestra chip en navbar ni avatar en modal
- * - Agrega soporte para select de franquicia/location
+ * Missing CSR/Producer (frontend)
+ * - KPI azul: Active Policies (endpoint ligero) => actualiza al cambiar de franquicia y en Apply.
+ * - KPI rojo: total visible en la DataTable (Missing CSR/Producer) => se calcula en cada draw/search/order/page/length.
  */
 (function () {
-  /* =========================
-     Helpers (dates)
-     ========================= */
   function formatDateISO(d) {
     if (!d) return null;
     const dt = new Date(d);
@@ -24,9 +18,7 @@
       const d = new Date(v);
       if (isNaN(d.getTime())) return "";
       return d.toISOString().slice(0, 10);
-    } catch {
-      return "";
-    }
+    } catch { return ""; }
   }
   function parseAnyToISO(s) {
     if (!s || typeof s !== "string") return null;
@@ -40,16 +32,17 @@
       const yyyy = m[3];
       return `${yyyy}-${mm}-${dd}`;
     }
-    return formatDateISO(v);
+    const dt = new Date(v);
+    return isNaN(dt.getTime()) ? null : dt.toISOString().slice(0, 10);
   }
 
-  /* =========================
-     Contexto de query (location + range) y actualización de nav links
-     ========================= */
   function getQueryContext() {
     const p = new URLSearchParams(location.search);
     const start = parseAnyToISO(p.get("start"));
     const end = parseAnyToISO(p.get("end"));
+    const activeRaw = (p.get("active") || "").toLowerCase();
+    const active = activeRaw === "1" || activeRaw === "true" || activeRaw === "on" || activeRaw === "yes";
+
     let locationIdRaw = p.get("location");
     const select = document.getElementById("location-select");
     if (select) {
@@ -57,9 +50,10 @@
       if (selVal !== undefined && selVal !== "") locationIdRaw = selVal;
     }
     const locationId = locationIdRaw != null && locationIdRaw !== "" ? Number(locationIdRaw) : null;
-    return { start, end, locationId };
+    return { start, end, locationId, active };
   }
-  function updateNavLinksWithContext({ start, end, locationId }) {
+
+  function updateNavLinksWithContext({ start, end, locationId, active }) {
     try {
       const links = document.querySelectorAll(
         'a[href^="/users/missing-csr-producer"], a[href^="/users/policy-report-by-location"]'
@@ -67,58 +61,20 @@
       links.forEach(a => {
         const url = new URL(a.getAttribute("href"), window.location.origin);
         if (locationId != null && !Number.isNaN(locationId)) url.searchParams.set("location", String(locationId));
+        if (active) url.searchParams.set("active", "1"); else url.searchParams.delete("active");
         if (start && end) {
           url.searchParams.set("start", start);
           url.searchParams.set("end", end);
+        } else {
+          url.searchParams.delete("start");
+          url.searchParams.delete("end");
         }
         a.setAttribute("href", url.pathname + (url.search ? url.search : ""));
       });
-    } catch (e) {
-      console.warn("[MCP] Failed to update nav links with context:", e);
-    }
-  }
-  let MCP_CTX = { start: null, end: null, locationId: null };
-
-  /* =========================
-     Alias de Location: mantenerlo pero NO mostrar chip en navbar
-     ========================= */
-  function setLocationAliasBadge(alias) {
-    const existingChip = document.getElementById("mcp-location-alias-chip");
-    if (existingChip && existingChip.parentNode) existingChip.parentNode.removeChild(existingChip);
-    const fixed = document.getElementById("mcp-location-alias-fixed");
-    if (fixed && fixed.parentNode) fixed.parentNode.removeChild(fixed);
-    const css = document.getElementById("mcp-location-alias-css");
-    if (css && css.parentNode) css.parentNode.removeChild(css);
+    } catch {}
   }
 
-  function updateLocationAliasFromData(data) {
-    if (MCP_CTX.locationId == null || Number.isNaN(MCP_CTX.locationId)) {
-      setLocationAliasBadge(null);
-      return;
-    }
-    let alias = null;
-
-    if (typeof window.MCP_LOCATION_ALIAS === "string" && window.MCP_LOCATION_ALIAS.trim()) {
-      alias = window.MCP_LOCATION_ALIAS.trim();
-    }
-    if (!alias && data && typeof data.locationAlias === "string" && data.locationAlias.trim()) {
-      alias = data.locationAlias.trim();
-    }
-    if (!alias && data && data.meta && typeof data.meta.locationAlias === "string" && data.meta.locationAlias.trim()) {
-      alias = data.meta.locationAlias.trim();
-    }
-    if (!alias && data && Array.isArray(data.rows) && data.rows.length) {
-      const withLoc = data.rows.find(r => r && r.location) || data.rows[0];
-      if (withLoc && withLoc.location) alias = String(withLoc.location).trim();
-    }
-    if (!alias) alias = `Location ${MCP_CTX.locationId}`;
-
-    setLocationAliasBadge(alias);
-  }
-
-  /* =========================
-     DataTable
-     ========================= */
+  let MCP_CTX = { start: null, end: null, locationId: null, active: false };
   let dt;
   let dtInitialized = false;
 
@@ -128,14 +84,49 @@
     return isNaN(x.getTime()) ? 0 : x.getTime();
   }
 
+  // KPI helpers
+  function updateActivePoliciesCount(count) {
+    const el = document.getElementById("mcp-active-policies-count");
+    if (!el) return;
+    const n = Number(count);
+    el.textContent = Number.isFinite(n) ? n.toLocaleString("en-US") : "0";
+  }
+  function updateMissingTotalCount(count) {
+    const el = document.getElementById("mcp-missing-total-count");
+    if (!el) return;
+    const n = Number(count);
+    el.textContent = Number.isFinite(n) ? n.toLocaleString("en-US") : "0";
+  }
+
+  function isNonEmptyRow(r) {
+    if (!r || typeof r !== "object") return false;
+    const fields = [
+      "policy_number",
+      "line_of_business",
+      "csr",
+      "producer",
+      "location",
+      "business_type",
+      "binder_date",
+      "effective_date",
+      "missing_fields",
+      "policy_status"
+    ];
+    return fields.some(k => String(r[k] || "").trim() !== "");
+  }
+
+  function updateMissingKpiFromTable() {
+    if (!dt) return;
+    const data = dt.rows({ search: "applied" }).data().toArray();
+    const count = data.filter(isNonEmptyRow).length;
+    updateMissingTotalCount(count);
+  }
+
   function initMissingPoliciesTable(rows) {
     const $table = $(".datatable-missing-csr-producer");
-    if ($table.length === 0) {
-      console.warn("[MCP] No table found with .datatable-missing-csr-producer");
-      return;
-    }
+    if ($table.length === 0) return;
     if (!$.fn || !$.fn.DataTable) {
-      console.error("[MCP] DataTables is not loaded. Include datatables JS.");
+      console.error("[MCP] DataTables is not loaded.");
       return;
     }
 
@@ -146,11 +137,11 @@
       existing.draw(false);
       dt = existing;
       dtInitialized = true;
+      updateMissingKpiFromTable();
       return;
     }
 
     const hasButtons = !!($.fn.dataTable && $.fn.dataTable.Buttons);
-
     const domLayout = hasButtons
       ? '<"row mb-2"<"col-12 col-md-4"l><"col-12 col-md-4"f><"col-12 col-md-4 d-flex justify-content-end"B>>rtip'
       : '<"row mb-2"<"col-12 col-md-6"l><"col-12 col-md-6"f>>rtip';
@@ -172,14 +163,12 @@
         { data: "policy_status",   title: "Policy Status",   className: "text-nowrap" }
       ],
       dom: domLayout,
-
       paging: true,
       searching: true,
       info: true,
       lengthChange: true,
       pageLength: 25,
       lengthMenu: [[10, 25, 50, 100, -1], ["10", "25", "50", "100", "All"]],
-
       responsive: true,
       autoWidth: false,
       language: {
@@ -207,110 +196,25 @@
           exportOptions: { columns: ":visible" }
         }
       ];
-    } else {
-      console.warn("[MCP] DataTables Buttons not loaded; CSV export will not appear.");
     }
 
     dt = $table.DataTable(dtOptions);
     dtInitialized = true;
 
-    const $csvBtn = $table.closest(".card, .container, body")
-      .find(".dataTables_wrapper .dt-buttons .buttons-csv, .dataTables_wrapper .dt-buttons .buttons-html5");
-    $csvBtn.addClass("btn btn-sm btn-primary export-csv-btn");
+    // Sincroniza KPI rojo con la tabla
+    dt.on("draw.dt search.dt order.dt page.dt length.dt", function () {
+      updateMissingKpiFromTable();
+    });
 
+    // Inicial
+    updateMissingKpiFromTable();
+
+    // Click fila -> modal (si lo usas)
     $table.off("click.mcp", "tbody tr").on("click.mcp", "tbody tr", function () {
       const row = dt.row(this).data();
       if (!row) return;
-      openPolicyModal(row);
+      // openPolicyModal(row); // opcional si mantienes el modal
     });
-  }
-
-  function ensurePolicyModal() {
-    if (document.getElementById("mcpRowDetailsModal")) return;
-
-    const style = document.createElement("style");
-    style.id = "mcp-row-modal-css";
-    style.textContent = `
-      #mcpRowDetailsModal{display:none;position:fixed;inset:0;background:rgba(15,18,22,.55);backdrop-filter:blur(2px);z-index:1055;align-items:center;justify-content:center;padding:20px;}
-      #mcpRowDetailsModal .modal-card{background:var(--bs-body-bg);color:var(--bs-body-color);border:1px solid var(--bs-border-color);border-radius:16px;width:min(920px,96vw);box-shadow:0 24px 60px rgba(0,0,0,.25);overflow:hidden;}
-      #mcpRowDetailsModal .modal-header{display:flex;align-items:center;gap:14px;padding:18px 22px;border-bottom:1px solid var(--bs-border-color);}
-      #mcpRowDetailsModal .modal-body{padding:20px 22px;}
-      #mcpRowDetailsModal .modal-footer{padding:14px 22px;border-top:1px solid var(--bs-border-color);display:flex;justify-content:flex-end;gap:10px;}
-      #mcpRowDetailsModal .title-wrap{display:flex;flex-direction:column;line-height:1.2}
-      #mcpRowDetailsModal .title-wrap .title{font-weight:700;font-size:1.15rem}
-      #mcpRowDetailsModal .title-wrap .subtitle{opacity:.8;font-size:.86rem}
-      #mcpRowDetailsModal .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 18px;}
-      @media (max-width:576px){#mcpRowDetailsModal .grid{grid-template-columns:1fr;}}
-      #mcpRowDetailsModal .item{padding:14px;border:1px solid var(--bs-border-color);border-radius:12px;display:flex;align-items:flex-start;gap:10px;}
-      #mcpRowDetailsModal .item i{font-size:18px;color:var(--bs-primary);}
-      #mcpRowDetailsModal .meta{display:flex;flex-direction:column;gap:4px}
-      #mcpRowDetailsModal .label{font-size:12px;color:var(--bs-secondary-color);text-transform:uppercase;letter-spacing:.03em}
-      #mcpRowDetailsModal .value{font-size:15px;font-weight:600;word-break:break-word}
-      #mcpRowDetailsModal .btn-close-x{border:none;background:transparent;color:inherit;padding:6px 8px;border-radius:8px}
-      #mcpRowDetailsModal .btn-close-x:hover{background:rgba(0,0,0,.06)}
-    `;
-    document.head.appendChild(style);
-
-    const wrapper = document.createElement("div");
-    wrapper.id = "mcpRowDetailsModal";
-    wrapper.innerHTML = `
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mcpRowTitle">
-        <div class="modal-header">
-          <div class="title-wrap">
-            <div id="mcpRowTitle" class="title">Policy</div>
-            <div id="mcpRowSubtitle" class="subtitle">Details</div>
-          </div>
-          <button type="button" class="btn-close-x ms-auto" id="mcpRowCloseTop" title="Close"><i class="ti ti-x"></i></button>
-        </div>
-        <div class="modal-body">
-          <div class="grid" id="mcpRowGrid"></div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" id="mcpRowCloseBottom">Close</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(wrapper);
-
-    const closeModal = () => { wrapper.style.display = "none"; };
-    document.getElementById("mcpRowCloseTop").addEventListener("click", closeModal);
-    document.getElementById("mcpRowCloseBottom").addEventListener("click", closeModal);
-    wrapper.addEventListener("click", (e) => { if (e.target === wrapper) closeModal(); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && wrapper.style.display === "flex") closeModal(); });
-  }
-
-  function openPolicyModal(row) {
-    ensurePolicyModal();
-
-    const policyNum = row.policy_number || "";
-    const lob = row.line_of_business || "";
-
-    document.getElementById("mcpRowTitle").textContent = policyNum ? `Policy ${policyNum}` : "Policy";
-    document.getElementById("mcpRowSubtitle").textContent = lob ? `LOB: ${lob}` : "Details";
-
-    const items = [
-      { label: "Policy #",         icon: "ti ti-hash",            value: policyNum || "" },
-      { label: "Line of Business", icon: "ti ti-briefcase",       value: lob || "" },
-      { label: "Business Type",    icon: "ti ti-businessplan",    value: row.business_type || "" },
-      { label: "CSR",              icon: "ti ti-user",            value: row.csr || "" },
-      { label: "Producer(s)",      icon: "ti ti-users",           value: row.producer || "" },
-      { label: "Binder Date",      icon: "ti ti-calendar",        value: safeDateDisp(row.binder_date) },
-      { label: "Effective Date",   icon: "ti ti-calendar-stats",  value: safeDateDisp(row.effective_date) },
-      { label: "Location",         icon: "ti ti-map-pin",         value: row.location || "" },
-      { label: "Policy Status",    icon: "ti ti-info-circle",     value: row.policy_status || "" }
-    ];
-
-    document.getElementById("mcpRowGrid").innerHTML = items.map(it => `
-      <div class="item">
-        <i class="${it.icon}"></i>
-        <div class="meta">
-          <div class="label">${it.label}</div>
-          <div class="value">${it.value}</div>
-        </div>
-      </div>
-    `).join("");
-
-    document.getElementById("mcpRowDetailsModal").style.display = "flex";
   }
 
   function updateMissingPoliciesTable(rows) {
@@ -321,18 +225,27 @@
     dt.clear();
     dt.rows.add(rows || []);
     dt.draw(false);
+    updateMissingKpiFromTable();
   }
 
-  async function fetchAndRenderMissingPolicies(startISO, endISO, opts = {}) {
+  async function fetchActivePoliciesCount(locationId) {
+    if (locationId == null || Number.isNaN(Number(locationId))) return;
+    try {
+      const url = `/api/active-policies-count?location=${encodeURIComponent(locationId)}`;
+      const res = await fetch(url, { cache: "no-store", credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } });
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      const data = await res.json();
+      updateActivePoliciesCount(data.count || 0);
+    } catch (e) {
+      console.warn("[MCP] Failed to fetch active policies count:", e);
+    }
+  }
+
+  async function fetchAndRenderMissingPolicies(startISO, endISO) {
     try {
       const params = new URLSearchParams();
-      if (opts.all === true) {
-        params.set("start", "all");
-        params.set("end", "all");
-      } else {
-        if (startISO) params.set("start", startISO);
-        if (endISO) params.set("end", endISO);
-      }
+
+      // Location
       const select = document.getElementById("location-select");
       let locationId = MCP_CTX.locationId;
       if (select && select.value !== "") locationId = select.value;
@@ -340,8 +253,15 @@
         params.set("location", String(locationId));
       }
 
-      const DEBUG = false;
-      if (DEBUG) params.set("debug", "1");
+      // Active-only flag (no controla fechas)
+      const activeOnly = !!document.getElementById("mcp-active-only")?.checked;
+      if (activeOnly) params.set("active", "1");
+
+      // Fechas: solo enviar si hay rango completo
+      if (startISO && endISO) {
+        params.set("start", startISO);
+        params.set("end", endISO);
+      }
 
       const url = `/api/missing-csr-producer?${params.toString()}`;
       const res = await fetch(url, {
@@ -351,94 +271,130 @@
       });
 
       if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(`Fetch failed: ${res.status} ${txt}`);
+        let serverMsg = "";
+        try {
+          const errJson = await res.json();
+          serverMsg = errJson?.error || "";
+        } catch {
+        /* ignore */ }
+        throw new Error(serverMsg || `Request failed (${res.status})`);
       }
 
       const data = await res.json();
       updateMissingPoliciesTable(data.rows || []);
 
+      // KPI azul (si el backend lo envía)
+      if (typeof data.activePoliciesCount === "number") {
+        updateActivePoliciesCount(data.activePoliciesCount);
+      } else if (locationId != null) {
+        // fallback
+        fetchActivePoliciesCount(locationId);
+      }
+
       const badge = document.getElementById("mcp-selected-range");
       if (badge) {
         const s = data.range?.startISO;
         const e = data.range?.endISO;
-        badge.textContent = s && e ? `${s} → ${e}` : "";
+        badge.textContent = s && e ? `${s} → ${e}` : "—";
       }
 
-      updateLocationAliasFromData(data);
+      MCP_CTX.active = !!activeOnly;
+      MCP_CTX.start = data.range?.startISO || null;
+      MCP_CTX.end = data.range?.endISO || null;
+      updateNavLinksWithContext({
+        start: MCP_CTX.start,
+        end: MCP_CTX.end,
+        locationId: MCP_CTX.locationId,
+        active: MCP_CTX.active
+      });
     } catch (e) {
       console.error("Error fetching missing CSR/Producer policies:", e);
-      alert("Error loading data: " + (e?.message || e));
+      alert(e?.message || "Error loading data.");
     }
   }
 
-  /* =========================
-     Bootstrap
-     ========================= */
   $(function () {
     MCP_CTX = getQueryContext();
 
-    setLocationAliasBadge(null);
+    // Inicializar inputs (flatpickr opcional)
+    if (window.flatpickr) {
+      flatpickr("#mcp-start", { dateFormat: "Y-m-d", allowInput: true });
+      flatpickr("#mcp-end",   { dateFormat: "Y-m-d", allowInput: true });
+    }
 
     if (MCP_CTX.start) $("#mcp-start").val(MCP_CTX.start);
     if (MCP_CTX.end) $("#mcp-end").val(MCP_CTX.end);
-    if (MCP_CTX.start && MCP_CTX.end) {
-      const badge = document.getElementById("mcp-selected-range");
-      if (badge) badge.textContent = `${MCP_CTX.start} → ${MCP_CTX.end}`;
-    }
 
-    // Si tienes el select, inicializa el valor
+    const activeChk = document.getElementById("mcp-active-only");
+    if (activeChk) activeChk.checked = !!MCP_CTX.active;
+
     const select = document.getElementById("location-select");
     if (select && MCP_CTX.locationId != null && !Number.isNaN(MCP_CTX.locationId)) {
       select.value = MCP_CTX.locationId;
     }
 
-    updateNavLinksWithContext(MCP_CTX);
-
+    // SSR inicial (si viene)
     const init = window.MCP_INITIAL || null;
     if (init) {
       updateMissingPoliciesTable(init.rows || []);
-      const badgeSSR = document.getElementById("mcp-selected-range");
-      if (badgeSSR && init.range) badgeSSR.textContent = `${init.range.startISO} → ${init.range.endISO}`;
-      if (!$("#mcp-start").val() && init.range?.startISO) $("#mcp-start").val(init.range.startISO);
-      if (!$("#mcp-end").val() && init.range?.endISO) $("#mcp-end").val(init.range.endISO);
-
-      updateLocationAliasFromData(init);
+      if (activeChk && typeof init.activeOnly === "boolean") {
+        activeChk.checked = init.activeOnly;
+        MCP_CTX.active = init.activeOnly;
+      }
+      if (typeof init.activePoliciesCount === "number") {
+        updateActivePoliciesCount(init.activePoliciesCount);
+      }
     }
 
-    if (MCP_CTX.start && MCP_CTX.end) {
-      setTimeout(() => $("#mcp-apply").trigger("click"), 50);
+    // Si hay location inicial, cargar KPI azul al entrar
+    if (MCP_CTX.locationId != null) {
+      fetchActivePoliciesCount(MCP_CTX.locationId);
     }
 
+    // Apply => recarga tabla y actualiza KPI azul también
     $("#mcp-apply").on("click", function () {
-      const startISO = formatDateISO($("#mcp-start").val());
-      const endISO = formatDateISO($("#mcp-end").val());
+      const rawStart = $("#mcp-start").val();
+      const rawEnd = $("#mcp-end").val();
+      const startISO = formatDateISO(rawStart);
+      const endISO = formatDateISO(rawEnd);
 
-      const select = document.getElementById("location-select");
-      let locationId = select && select.value !== "" ? select.value : MCP_CTX.locationId;
+      const haveStart = !!(rawStart && rawStart.trim() !== "");
+      const haveEnd = !!(rawEnd && rawEnd.trim() !== "");
 
-      if (!startISO && !endISO) {
-        MCP_CTX.locationId = locationId;
-        fetchAndRenderMissingPolicies(null, null, { all: true });
+      if ((haveStart && !haveEnd) || (!haveStart && haveEnd)) {
+        alert("Please select both start and end dates to use a date range, or leave both empty.");
         return;
       }
-      if (!startISO || !endISO) {
-        alert("Select both start and end dates");
+      if ((haveStart && !startISO) || (haveEnd && !endISO)) {
+        alert("Invalid date format. Please use YYYY-MM-DD.");
         return;
       }
-      const swap = new Date(startISO) > new Date(endISO);
-      const s = swap ? endISO : startISO;
-      const e = swap ? startISO : endISO;
-      MCP_CTX.locationId = locationId;
-      fetchAndRenderMissingPolicies(s, e);
+      if (startISO && endISO && new Date(startISO) > new Date(endISO)) {
+        alert("Invalid date range: start date must not be after end date.");
+        return;
+      }
+
+      fetchAndRenderMissingPolicies(startISO || null, endISO || null);
+
+      const loc = document.getElementById("location-select")?.value || MCP_CTX.locationId;
+      if (loc != null && !Number.isNaN(Number(loc))) {
+        fetchActivePoliciesCount(Number(loc));
+      }
     });
 
-    // Cuando cambias el select, dispara Apply automáticamente
+    // Cambiar de franquicia => auto-apply y actualiza KPI azul inmediatamente
     $("#location-select").on("change", function () {
+      MCP_CTX.locationId = $(this).val() || null;
+      const loc = MCP_CTX.locationId;
+      if (loc != null && !Number.isNaN(Number(loc))) {
+        fetchActivePoliciesCount(Number(loc));
+      }
       $("#mcp-apply").trigger("click");
     });
 
-    flatpickr("#mcp-start", { dateFormat: "Y-m-d", allowInput: true, locale: "en" });
-    flatpickr("#mcp-end",   { dateFormat: "Y-m-d", allowInput: true, locale: "en" });
+    // El toggle Active se aplica al presionar Apply (manteniendo reglas de la página)
+    $("#mcp-active-only").on("change", function () {
+      // No hacemos fetch hasta Apply; el KPI rojo se recalculará tras recargar la tabla.
+    });
   });
 })();

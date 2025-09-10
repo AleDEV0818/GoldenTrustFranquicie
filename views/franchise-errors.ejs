@@ -2,40 +2,47 @@
 <html lang="en" class="light-style layout-navbar-fixed layout-menu-fixed layout-compact" dir="ltr"
   data-theme="theme-default" data-assets-path="/" data-template="vertical-menu-template">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Franchise Errors | GTI</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Franchise Errors | GTI</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&ampdisplay=swap" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&ampdisplay=swap" rel="stylesheet" />
 
-  <!-- Icons + CSS (vendor) -->
-  <link rel="stylesheet" href="/vendor/fonts/fontawesome.css" />
-  <link rel="stylesheet" href="/vendor/fonts/tabler-icons.css" />
-  <link rel="stylesheet" href="/vendor/fonts/flag-icons.css" />
-  <link rel="stylesheet" href="/vendor/css/rtl/core.css" class="template-customizer-core-css" />
-  <link rel="stylesheet" href="/vendor/css/rtl/theme-default.css" class="template-customizer-theme-css" />
-  <link rel="stylesheet" href="/css/demo.css" />
-  <link rel="stylesheet" href="/vendor/libs/node-waves/node-waves.css" />
-  <link rel="stylesheet" href="/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
-  <link rel="stylesheet" href="/vendor/libs/typeahead-js/typeahead.css" />
-  <link rel="stylesheet" href="/vendor/libs/apex-charts/apex-charts.css" />
-  <link rel="stylesheet" href="/vendor/libs/swiper/swiper.css" />
+<!-- Icons + CSS (vendor) -->
+<link rel="stylesheet" href="/vendor/fonts/fontawesome.css" />
+<link rel="stylesheet" href="/vendor/fonts/tabler-icons.css" />
+<link rel="stylesheet" href="/vendor/fonts/flag-icons.css" />
+<link rel="stylesheet" href="/vendor/css/rtl/core.css" class="template-customizer-core-css" />
+<link rel="stylesheet" href="/vendor/css/rtl/theme-default.css" class="template-customizer-theme-css" />
+<link rel="stylesheet" href="/css/demo.css" />
+<link rel="stylesheet" href="/vendor/libs/node-waves/node-waves.css" />
+<link rel="stylesheet" href="/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
+<link rel="stylesheet" href="/vendor/libs/typeahead-js/typeahead.css" />
+<link rel="stylesheet" href="/vendor/libs/apex-charts/apex-charts.css" />
+<link rel="stylesheet" href="/vendor/libs/swiper/swiper.css" />
 
-  <!-- DataTables (Bootstrap 5 + Responsive) -->
-  <link rel="stylesheet" href="/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
-  <link rel="stylesheet" href="/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
-  <link rel="stylesheet" href="/vendor/libs/datatables-checkboxes-jquery/datatables.checkboxes.css" />
+<!-- DataTables (Bootstrap 5 + Responsive + Buttons) -->
+<link rel="stylesheet" href="/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
+<link rel="stylesheet" href="/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css" />
+<link rel="stylesheet" href="/vendor/libs/datatables-checkboxes-jquery/datatables.checkboxes.css" />
+<link rel="stylesheet" href="/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css" />
 
-  <link rel="stylesheet" href="/vendor/css/pages/cards-advance.css" />
+<link rel="stylesheet" href="/vendor/css/pages/cards-advance.css" />
 
-  <!-- Flatpickr Calendar -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<!-- Flatpickr Calendar -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
-  <script src="/vendor/js/helpers.js"></script>
-  <script src="/vendor/js/template-customizer.js"></script>
-  <script src="/js/config.js"></script>
+<!-- SweetAlert2 (Loading modal) -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet"/>
+
+<!-- Opcional (solo para la animación fade-in del spinner) -->
+<link href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" rel="stylesheet"/>
+
+<script src="/vendor/js/helpers.js"></script>
+<script src="/vendor/js/template-customizer.js"></script>
+<script src="/js/config.js"></script>
 
   <style>
    #selected-range { color: #fff !important; }
@@ -230,21 +237,124 @@
   border: 1px solid #e0e7ff !important;
   box-shadow: 0 2px 12px 0 rgba(30,70,255,0.07) !important;
 }
+
+
+/* Mismo estilo de filtros que MCP (toolbar sobria con ft-group) */
+.filter-toolbar {
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+.ft-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.03);
+  min-height: 52px;
+}
+.ft-group.ft-apply {
+  min-width: 160px;
+  justify-content: center;
+}
+.ft-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 4px;
+}
+.ft-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  color: var(--bs-primary);
+  background: color-mix(in srgb, var(--bs-primary) 12%, transparent);
+}
+.ft-label {
+  font-weight: 600;
+  font-size: .9rem;
+  letter-spacing: .01em;
+  color: var(--bs-body-color);
+}
+.ft-body { display: inline-flex; align-items: center; gap: 8px; }
+.ft-sep { opacity: .65; font-size: .85rem; margin: 0 2px; }
+.ft-vr {
+  width: 1px; align-self: stretch;
+  background: linear-gradient(180deg, transparent 0%, var(--bs-border-color) 20%, var(--bs-border-color) 80%, transparent 100%);
+  margin: 0 2px;
+}
+
+/* Inputs sutiles + compatibilidad con glass-calendar */
+.input-group-text {
+  background: var(--bs-body-bg);
+  border-color: var(--bs-border-color);
+  color: var(--bs-secondary-color);
+}
+.form-control, .form-select {
+  border-color: var(--bs-border-color);
+  background: var(--bs-body-bg);
+}
+.form-control:focus, .form-select:focus {
+  border-color: color-mix(in srgb, var(--bs-primary) 35%, var(--bs-border-color));
+  box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--bs-primary) 18%, transparent);
+}
+
+/* Badges suaves (mismo esquema) */
+.bg-primary-subtle { background-color: color-mix(in srgb, var(--bs-primary) 12%, transparent) !important; }
+.text-primary-emphasis { color: color-mix(in srgb, var(--bs-primary) 70%, black) !important; }
+
+/* Responsive */
+@media (max-width: 992px) {
+  .ft-group { width: 100%; }
+  .ft-vr { display: none; }
+  .ft-group.ft-apply { min-width: unset; }
+}
+
+/* Columnas con colores de números */
+  .datatable-franchise-errors th.col-active-policies,
+  .datatable-franchise-errors th.col-active-clients {
+    background: transparent !important;
+    color: #0b5ed7; /* azul header */
+    font-weight: 700;
+    text-shadow: 0 1px 0 rgba(13,110,253,0.2);
+  }
+  .datatable-franchise-errors td.col-active-policies,
+  .datatable-franchise-errors td.col-active-clients {
+    background: transparent !important;
+    color: #0b3d91; /* azul oscuro para los números */
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    box-shadow:
+      inset 0 -8px 16px rgba(13, 110, 253, 0.18),
+      inset 0  8px 16px rgba(13, 110, 253, 0.08);
+  }
+
+  .datatable-franchise-errors th.col-total-errors {
+    background: transparent !important;
+    color: #dc3545; /* rojo header */
+    font-weight: 800;
+    text-shadow: 0 1px 0 rgba(220,53,69,0.2);
+  }
+  .datatable-franchise-errors td.col-total-errors {
+    background: transparent !important;
+    color: #c62828; /* rojo oscuro para los números */
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    box-shadow:
+      inset 0 -8px 16px rgba(220, 53, 69, 0.22),
+      inset 0  8px 16px rgba(220, 53, 69, 0.10);
+  }
   </style>
+
 </head>
 
-<!-- Flatpickr JS -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  flatpickr("#fr-errors-start", {
-    dateFormat: "Y-m-d"
-  });
-  flatpickr("#fr-errors-end", {
-    dateFormat: "Y-m-d"
-  });
-});
-</script>
+
 
 <body>
 
@@ -401,39 +511,27 @@ document.addEventListener('DOMContentLoaded', function() {
 <% } %>
 
           
- <%
-  const path = (typeof currentPath === 'string') ? currentPath : '';
-  const canSeeFK = (typeof canSeeFranchiseSection !== 'undefined')
-    ? canSeeFranchiseSection
-    : (user && (user.location_type === 1 || (user.department && user.department.trim() === 'Marketing & IT')));
-%>
 
-<% if (canSeeFK) { %>
-  <li class="menu-header small text-uppercase">
-    <span class="menu-header-text" data-i18n="FRANCHISE">FRANCHISE</span>
-  </li>
+<li class="menu-header small text-uppercase">
+  <span class="menu-header-text" data-i18n="FRANCHISE">FRANCHISE</span>
+</li>
 
-  <li class="menu-item <%= path.startsWith('/franchise-kpis') ? 'active' : '' %>">
-    <a href="/franchise-kpis" class="menu-link">
-      <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
-      <div data-i18n="Renewals">Renewals</div>
-    </a>
-  </li>
+<li class="menu-item">
+  <a href="/franchise-kpis" class="menu-link">
+    <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
+    <div data-i18n="Renewals">Renewals</div>
+  </a>
+</li>
 
-
-
-  <li class="menu-item active <%= path.startsWith('/franchise-errors') ? 'active' : '' %>">
-    <a href="/franchise-errors" class="menu-link">
-      <i class="menu-icon tf-icons ti ti-alert-triangle"></i>
-      <div data-i18n="Errors">Errors</div>
-    </a>
-  </li>
+<li class="menu-item active">
+  <a href="/franchise-errors" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-alert-triangle"></i>
+    <div data-i18n="Errors">Errors</div>
+  </a>
+</li>
 
 
-
-
-
-   <% } %>  
+   
         </ul>
 
       </aside>
@@ -575,45 +673,85 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
 <div class="my-3"></div>
 
-<!-- Date Selector + Badge -->
+<!-- Franchise Errors – Filtros (mismo estilo que MCP: toolbar + ft-group + íconos) -->
 <div class="mx-2 mx-md-4 mb-4">
-  <div class="card shadow">
-    <div class="card-body">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <div class="d-flex align-items-center gap-2">
-          <label for="fr-errors-start" class="form-label mb-0">Start</label>
-          <input 
-            type="text" 
-            id="fr-errors-start" 
-            class="form-control" 
-            style="min-width:160px;" 
-            value="<%= initialRange?.startISO || '' %>" 
-          />
+  <div class="filter-toolbar shadow-sm">
+    <div class="d-flex flex-wrap align-items-stretch gap-3">
+
+      <!-- Grupo: Fechas -->
+      <div class="ft-group">
+        <div class="ft-header">
+          <span class="ft-icon" aria-hidden="true"><i class="ti ti-calendar"></i></span>
+          <span class="ft-label">Dates</span>
         </div>
-        <div class="d-flex align-items-center gap-2">
-          <label for="fr-errors-end" class="form-label mb-0">End</label>
-          <input 
-            type="text" 
-            id="fr-errors-end" 
-            class="form-control" 
-            style="min-width:160px;" 
-            value="<%= initialRange?.endISO || '' %>" 
-          />
+        <div class="ft-body">
+          <div class="input-group input-group-sm">
+            <input
+              type="text"
+              id="fr-errors-start"
+              class="form-control glass-calendar"
+              value="<%= initialRange?.startISO || '' %>"
+              placeholder="YYYY-MM-DD"
+              aria-label="Start date"
+              autocomplete="off"
+            />
+          </div>
+          <span class="ft-sep">to</span>
+          <div class="input-group input-group-sm">
+            <input
+              type="text"
+              id="fr-errors-end"
+              class="form-control glass-calendar"
+              value="<%= initialRange?.endISO || '' %>"
+              placeholder="YYYY-MM-DD"
+              aria-label="End date"
+              autocomplete="off"
+            />
+          </div>
         </div>
-        <button class="btn btn-primary" id="fr-errors-apply">
-          <i class="ti ti-refresh me-1"></i> Apply
-        </button>
-        <span class="badge bg-primary ms-auto text-white" id="selected-range">
-          <%= (initialRange?.startISO && initialRange?.endISO) ? (initialRange.startISO + ' → ' + initialRange.endISO) : '—' %>
-        </span>
       </div>
+
+      <div class="ft-vr" aria-hidden="true"></div>
+
+      <!-- Grupo: Active -->
+      <div class="ft-group">
+        <div class="ft-header">
+          <span class="ft-icon" aria-hidden="true"><i class="ti ti-activity"></i></span>
+          <span class="ft-label">Active</span>
+        </div>
+        <div class="ft-body d-flex align-items-center">
+          <div class="form-check form-switch m-0">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="frx-active-only"
+              value="1"
+              <%= activeOnly ? 'checked' : '' %>
+              aria-label="Only active"
+            />
+            <label class="form-check-label ms-1" for="frx-active-only">Only</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Apply -->
+      <div class="ft-group ft-apply">
+        <div class="ft-body w-100">
+          <button class="btn btn-primary btn-sm w-100" id="fr-errors-apply" type="button">Apply</button>
+        </div>
+      </div>
+
+
+
     </div>
   </div>
 </div>
 
-<!-- Tabla -->
+<!-- Tabla de errores de franquicia -->
 <div class="mx-2 mx-md-4 my-4">
   <div class="card shadow">
     <div class="card-body">
@@ -621,12 +759,15 @@ document.addEventListener('DOMContentLoaded', function() {
         <table class="datatable-franchise-errors table table-striped table-bordered align-middle mb-0" style="width:100%;">
           <thead>
             <tr>
-              <th>Franchise</th>
-              <th>Binder errors</th>
-              <th>Missing CSR</th>
-              <th>Missing Producer</th>
-              <th>Missing (any)</th>
-              <th>Total errors</th>
+              <th class="align-middle">Franchise</th>
+              <th class="text-end align-middle col-active-policies">A. Polices</th>
+              <th class="text-end align-middle col-active-clients">A. Client</th>
+              <th class="text-end align-middle col-total-errors">Total errors</th>
+              <th class="text-end align-middle">Binder errors</th>
+              <th class="text-end align-middle">Missing CSR</th>
+              <th class="text-end align-middle">Missing Producer</th>
+              <th class="text-end align-middle">Missing (any)</th>
+              <th class="text-end align-middle">Missing Contact Info</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -635,6 +776,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
+
 
 <footer class="content-footer footer bg-footer-theme">
   <div class="container-xxl">
@@ -653,6 +795,7 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </footer>
 
+<div class="content-backdrop fade"></div>
 <!-- Base Scripts -->
 <script src="/vendor/libs/jquery/jquery.js"></script>
 <script src="/vendor/libs/popper/popper.js"></script>
@@ -660,22 +803,19 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="/vendor/libs/node-waves/node-waves.js"></script>
 <script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
 <script src="/vendor/libs/i18n/i18n.js"></script>
-
 <script src="/vendor/js/helpers.js"></script>
 <script src="/vendor/js/template-customizer.js"></script>
 <script src="/js/config.js"></script>
-
-<!-- Typeahead (if used) + your polyfill -->
 <script src="/vendor/libs/typeahead-js/typeahead.js"></script>
+<script>if (!$.fn.typeahead) { $.fn.typeahead = function(){ return this; }; }</script>
 <script src="/js/data.js"></script>
-
 <script src="/vendor/js/menu.js"></script>
 
-<!-- Core DataTables Bootstrap 5 (local) -->
+<!-- DataTables core (local) -->
 <script src="/vendor/libs/datatables-bs5/datatables-bootstrap5.js"></script>
+<script src="/vendor/libs/jszip/jszip.min.js"></script>
 
-
-<!-- OPTION B: WITH CDN (Buttons + Responsive) -->
+<!-- DataTables Buttons + Responsive (CDN) -->
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
@@ -683,7 +823,14 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+<!-- Flatpickr -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<!-- SweetAlert2 (Loading modal for searches) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+
+<!-- App scripts -->
 <script src="/js/main.js"></script>
 <script src="/js/franchise-errors.js"></script>
 </body>

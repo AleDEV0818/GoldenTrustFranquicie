@@ -36,42 +36,44 @@ $(document).ready(function () {
 
   // Initialize selectpicker just once
   $('.selectpicker').selectpicker();
-function updateAgencyFilter(options, selected) {
-  const $agency = $('#filter-agency');
-  if ($agency.hasClass('selectpicker')) $agency.selectpicker('destroy');
-  $agency.empty();
-  // agrega solo las opciones reales
-  const items = uniqueNormalized(options);
-  items.forEach(agency => {
-    $agency.append(`<option value="${agency}">${agency}</option>`);
-  });
-  $agency.selectpicker(); // vuelve a inicializar
-  if (items.length === 1) {
-    $agency.selectpicker('val', items[0]);
-  } else if (selected) {
-    $agency.selectpicker('val', selected);
-  } else {
-    $agency.selectpicker('val', ''); // muestra el placeholder del title
-  }
-}
 
-function updateCompanyFilter(options, selected) {
-  const $company = $('#filter-company');
-  if ($company.hasClass('selectpicker')) $company.selectpicker('destroy');
-  $company.empty();
-  const items = uniqueNormalized(options);
-  items.forEach(company => {
-    $company.append(`<option value="${company}">${company}</option>`);
-  });
-  $company.selectpicker();
-  if (items.length === 1) {
-    $company.selectpicker('val', items[0]);
-  } else if (selected) {
-    $company.selectpicker('val', selected);
-  } else {
-    $company.selectpicker('val', '');
+  function updateAgencyFilter(options, selected) {
+    const $agency = $('#filter-agency');
+    if ($agency.hasClass('selectpicker')) $agency.selectpicker('destroy');
+    $agency.empty();
+    const items = uniqueNormalized(options);
+    items.forEach(agency => {
+      $agency.append(`<option value="${agency}">${agency}</option>`);
+    });
+    $agency.selectpicker();
+    if (items.length === 1) {
+      $agency.selectpicker('val', items[0]);
+    } else if (selected) {
+      $agency.selectpicker('val', selected);
+    } else {
+      $agency.selectpicker('val', '');
+    }
   }
-}
+
+  function updateCompanyFilter(options, selected) {
+    const $company = $('#filter-company');
+    if ($company.hasClass('selectpicker')) $company.selectpicker('destroy');
+    $company.empty();
+    const items = uniqueNormalized(options);
+    items.forEach(company => {
+      $company.append(`<option value="${company}">${company}</option>`);
+    });
+    $company.selectpicker();
+    if (items.length === 1) {
+      $company.selectpicker('val', items[0]);
+    } else if (selected) {
+      $company.selectpicker('val', selected);
+    } else {
+      $company.selectpicker('val', '');
+    }
+  }
+
+  // DataTable SIN location_id
   const $codesTable = $('#codes-table');
   const dt = $codesTable.DataTable({
     columns: [
@@ -147,6 +149,7 @@ function updateCompanyFilter(options, selected) {
         codesData = [];
       }
       dt.clear();
+      // No mostramos location_id; solo filtramos por relevancia usando agenciesMap
       const visibleRows = codesData.filter(row => isAgencyRelevant(row.agency));
       dt.rows.add(visibleRows);
       dt.draw();
@@ -218,7 +221,7 @@ function updateCompanyFilter(options, selected) {
     else icon = '';
     let modalId = 'codes-modal-feedback';
     let modalHtml = `
-    <div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}-label" aria-hidden="true">
+    <div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}-label">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">

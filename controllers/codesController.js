@@ -8,8 +8,8 @@ import stringSimilarity from "string-similarity";
 function cleanString(str) {
   return String(str)
     .toUpperCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // quita acentos
-    .replace(/[\s\t\r\n]+/g, " ") // reemplaza tabs/saltos por espacio
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\s\t\r\n]+/g, " ")
     .trim();
 }
 
@@ -127,6 +127,8 @@ export const exportCsv = async (req, res) => {
       CODE: row.code,
       LOGIN: row.login,
       PASSWORD: row.password,
+      // Si quieres incluir el location_id en el CSV, agrega:
+      // LOCATION_ID: row.location_id,
     }));
     const fields = Object.keys(
       data[0] || {
@@ -170,17 +172,21 @@ export const importCodes = async (req, res) => {
       data = xlsx.utils.sheet_to_json(sheet);
     }
 
-    // Preload all aliases from qq.locations, limpiar para matching
+    // Preload all aliases and their location_id from qq.locations
     const allAliasesRes = await pool.query(
-      "SELECT alias FROM qq.locations WHERE alias IS NOT NULL"
+      "SELECT alias, location_id FROM qq.locations WHERE alias IS NOT NULL"
     );
     const allAliases = allAliasesRes.rows.map(r => r.alias);
     const allAliasesCleaned = allAliases.map(cleanString);
+    const aliasToLocationId = {};
+    for (const row of allAliasesRes.rows) {
+      aliasToLocationId[row.alias] = row.location_id;
+    }
 
     function getBestAlias(input) {
       if (!input) return null;
       const agencyClean = cleanString(input);
-      const threshold = 0.35; // umbral bajo
+      const threshold = 0.35;
       const { bestMatch } = stringSimilarity.findBestMatch(agencyClean, allAliasesCleaned);
       if (bestMatch.rating >= threshold) {
         const idx = allAliasesCleaned.indexOf(bestMatch.target);
@@ -191,7 +197,7 @@ export const importCodes = async (req, res) => {
 
     let inserted = 0, updated = 0, skipped = 0;
     let insertedRows = [], updatedRows = [], skippedRows = [];
-    // Guarda las combinaciones únicas importadas para el enabled=false
+    // Unique combination for enabled=false (now includes location_id)
     const importedKeys = new Set();
 
     for (const row of data) {
@@ -206,7 +212,10 @@ export const importCodes = async (req, res) => {
         "";
       const agency = getBestAlias(agencyRaw);
 
-      if (!agency) {
+      // NUEVO: obtener location_id
+      const location_id = agency ? aliasToLocationId[agency] : null;
+
+      if (!agency || !location_id) {
         skipped++;
         skippedRows.push({
           agency: agencyRaw,
@@ -214,7 +223,7 @@ export const importCodes = async (req, res) => {
           code: row["Agency Code"] || row["CODE"] || "",
           login: row["User Name"] || row["LOGIN"] || "",
           password: row["Password"] || row["PASSWORD"] || "",
-          reason: "Agency fuzzy match not found"
+          reason: !agency ? "Agency fuzzy match not found" : "No location_id found for agency"
         });
         continue;
       }
@@ -224,41 +233,41 @@ export const importCodes = async (req, res) => {
       const login = cleanString(row["User Name"] || row["LOGIN"] || row["login"] || "");
       const password = cleanString(row["Password"] || row["PASSWORD"] || row["password"] || "");
 
-      if (![agency, company, code, login, password].every(Boolean)) {
+      if (![agency, company, code, login, password, location_id].every(Boolean)) {
         skipped++;
-        skippedRows.push({ agency, company, code, login, password, reason: "Missing field" });
+        skippedRows.push({ agency, company, code, login, password, location_id, reason: "Missing field" });
         continue;
       }
 
-      // Guarda la key para enabled=false posterior
-      importedKeys.add(`${agency}|||${company}|||${code}`);
+      // Key incluye location_id ahora
+      importedKeys.add(`${agency}|||${company}|||${code}|||${location_id}`);
 
       // UPSERT: insert or update if PK exists, y siempre enabled=true
       const result = await pool.query(
-        `INSERT INTO admin.code (agency, company, code, login, password, enabled)
-         VALUES ($1, $2, $3, $4, $5, true)
-         ON CONFLICT (agency, company, code)
+        `INSERT INTO admin.code (agency, company, code, login, password, location_id, enabled)
+         VALUES ($1, $2, $3, $4, $5, $6, true)
+         ON CONFLICT (agency, company, code, location_id)
          DO UPDATE SET login = EXCLUDED.login, password = EXCLUDED.password, enabled = true
          RETURNING xmax = 0 AS inserted`,
-        [agency, company, code, login, password]
+        [agency, company, code, login, password, location_id]
       );
       if (result.rows[0].inserted) {
         inserted++;
-        insertedRows.push({ agency, company, code, login, password });
+        insertedRows.push({ agency, company, code, login, password, location_id });
       } else {
         updated++;
-        updatedRows.push({ agency, company, code, login, password });
+        updatedRows.push({ agency, company, code, login, password, location_id });
       }
     }
 
-    // Desactiva todos los códigos que NO estén en el archivo importado (enabled=false)
-    const existing = await pool.query("SELECT agency, company, code FROM admin.code WHERE enabled = true");
+    // Desactiva todos los códigos que NO estén en el archivo importado (enabled=false), clave incluye location_id
+    const existing = await pool.query("SELECT agency, company, code, location_id FROM admin.code WHERE enabled = true");
     for (const row of existing.rows) {
-      const key = `${row.agency}|||${row.company}|||${row.code}`;
+      const key = `${row.agency}|||${row.company}|||${row.code}|||${row.location_id}`;
       if (!importedKeys.has(key)) {
         await pool.query(
-          `UPDATE admin.code SET enabled = false WHERE agency = $1 AND company = $2 AND code = $3`,
-          [row.agency, row.company, row.code]
+          `UPDATE admin.code SET enabled = false WHERE agency = $1 AND company = $2 AND code = $3 AND location_id = $4`,
+          [row.agency, row.company, row.code, row.location_id]
         );
       }
     }

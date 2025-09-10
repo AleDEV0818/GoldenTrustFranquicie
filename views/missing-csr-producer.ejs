@@ -10,7 +10,9 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+   <link rel="stylesheet" href="/css/filter-toolbar.css">
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+ 
 
   <!-- Icons + CSS (vendor) -->
   <link rel="stylesheet" href="/vendor/fonts/fontawesome.css" />
@@ -32,8 +34,11 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
 
+
   <style>
-    /* Solo botón Export CSV: estilos del botón */
+/* =========================
+   DataTables: Export CSV button
+   ========================= */
 .dataTables_wrapper .dt-buttons {
   display: flex;
   align-items: center;
@@ -45,12 +50,9 @@
   padding: .35rem .7rem;
   font-size: .85rem;
   border-radius: .25rem !important;
+  cursor: pointer;
 }
-.dataTables_wrapper .dt-buttons .btn-primary {
-  background-color: var(--bs-primary);
-  border-color: var(--bs-primary);
-  color: #fff;
-}
+.dataTables_wrapper .dt-buttons .btn-primary,
 .dataTables_wrapper .dt-buttons .btn.btn-primary.export-csv-btn {
   background-color: var(--bs-primary);
   border-color: var(--bs-primary);
@@ -58,7 +60,7 @@
 }
 
 /* =========================
-   Modal (mismo estilo que "franchise errors")
+   Modal (detalle de póliza)
    ========================= */
 #mcpRowDetailsModal {
   display: none;
@@ -86,9 +88,7 @@
   padding: 18px 22px;
   border-bottom: 1px solid var(--bs-border-color);
 }
-#mcpRowDetailsModal .modal-body {
-  padding: 20px 22px;
-}
+#mcpRowDetailsModal .modal-body { padding: 20px 22px; }
 #mcpRowDetailsModal .modal-footer {
   padding: 14px 22px;
   border-top: 1px solid var(--bs-border-color);
@@ -97,15 +97,9 @@
   gap: 8px;
 }
 #mcpRowDetailsModal .avatar {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  color: #fff;
-  font-weight: 700;
-  font-size: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  width: 46px; height: 46px; border-radius: 50%;
+  color: #fff; font-weight: 700; font-size: 18px;
+  display: inline-flex; align-items: center; justify-content: center;
   box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 #mcpRowDetailsModal .grid {
@@ -120,23 +114,28 @@
   padding: 12px 14px;
   border: 1px solid var(--bs-border-color);
   border-radius: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+#mcpRowDetailsModal .item i {
+  font-size: 18px;
+  color: var(--bs-primary);
 }
 #mcpRowDetailsModal .item .label {
   font-size: 12px;
   color: var(--bs-secondary-color);
   text-transform: uppercase;
   letter-spacing: .02em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 #mcpRowDetailsModal .item .value {
   font-size: 16px;
   font-weight: 600;
   margin-top: 6px;
 }
+
 /* =========================
-   Flatpickr Glassy Dark/Green Style (DARK MODE)
+   Flatpickr Glassy Dark/Green (DARK MODE)
    ========================= */
 .dark-style .flatpickr-calendar {
   border-radius: 1rem !important;
@@ -156,6 +155,12 @@
   background: rgba(30,34,54,0.92) !important;
   font-weight: 600;
   border-radius: 0.75rem !important;
+}
+.dark-style .flatpickr-weekdays,
+.dark-style .flatpickr-weekday {
+  background: transparent !important;
+  color: #cfe3ff !important;
+  opacity: .9;
 }
 .dark-style .flatpickr-monthDropdown-months,
 .dark-style .flatpickr-yearDropdown-years {
@@ -179,7 +184,7 @@
   border-radius: 0.5em !important;
 }
 .dark-style .flatpickr-day:hover {
-  background: #81C784cc !important; /* Verde claro con opacidad */
+  background: #81C784cc !important;
   color: #111 !important;
 }
 .dark-style .flatpickr-day.selected,
@@ -199,6 +204,14 @@
   color: #bbb !important;
   opacity: 0.7;
 }
+.dark-style .flatpickr-time {
+  background: rgba(30,34,54,0.92) !important;
+  border-top: 1px solid rgba(255,255,255,0.12) !important;
+}
+.dark-style .numInput, 
+.dark-style .flatpickr-time input {
+  color: #fff !important;
+}
 .dark-style input[type="text"].form-control,
 .dark-style input[type="text"].glass-calendar {
   background: rgba(30,34,54,0.92) !important;
@@ -209,7 +222,7 @@
 }
 
 /* =========================
-   Flatpickr Glassy Light/Blue Style (LIGHT MODE)
+   Flatpickr Glassy Light/Blue (LIGHT MODE)
    ========================= */
 .light-style .flatpickr-calendar {
   border-radius: 1rem !important;
@@ -229,6 +242,12 @@
   background: #f1f4fe !important;
   font-weight: 600;
   border-radius: 0.75rem !important;
+}
+.light-style .flatpickr-weekdays,
+.light-style .flatpickr-weekday {
+  background: transparent !important;
+  color: #6e8efb !important;
+  opacity: .95;
 }
 .light-style .flatpickr-monthDropdown-months,
 .light-style .flatpickr-yearDropdown-years {
@@ -252,7 +271,7 @@
   border-radius: 0.5em !important;
 }
 .light-style .flatpickr-day:hover {
-  background: #3570ff22 !important; /* Azul claro con opacidad */
+  background: #3570ff22 !important;
   color: #222 !important;
 }
 .light-style .flatpickr-day.selected,
@@ -272,6 +291,14 @@
   color: #bbb !important;
   opacity: 0.7;
 }
+.light-style .flatpickr-time {
+  background: #f7faff !important;
+  border-top: 1px solid #e0e7ff !important;
+}
+.light-style .numInput, 
+.light-style .flatpickr-time input {
+  color: #3570ff !important;
+}
 .light-style input[type="text"].form-control,
 .light-style input[type="text"].glass-calendar {
   background: #fff !important;
@@ -280,6 +307,124 @@
   border: 1px solid #e0e7ff !important;
   box-shadow: 0 2px 12px 0 rgba(30,70,255,0.07) !important;
 }
+
+/* =========================
+   Toolbar sobria y elegante
+   ========================= */
+.filter-toolbar {
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+.ft-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.03);
+  min-height: 52px;
+}
+.ft-group.ft-apply {
+  min-width: 160px;
+  justify-content: center;
+}
+.ft-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 4px;
+}
+.ft-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  color: var(--bs-primary);
+  background: color-mix(in srgb, var(--bs-primary) 12%, transparent);
+}
+.ft-label {
+  font-weight: 600;
+  font-size: .9rem;
+  letter-spacing: .01em;
+  color: var(--bs-body-color);
+}
+.ft-body { display: inline-flex; align-items: center; gap: 8px; }
+.ft-sep { opacity: .65; font-size: .85rem; margin: 0 2px; }
+.ft-vr {
+  width: 1px; align-self: stretch;
+  background: linear-gradient(180deg, transparent 0%, var(--bs-border-color) 20%, var(--bs-border-color) 80%, transparent 100%);
+  margin: 0 2px;
+}
+
+/* Inputs sutiles */
+.input-group-text {
+  background: var(--bs-body-bg);
+  border-color: var(--bs-border-color);
+  color: var(--bs-secondary-color);
+}
+.form-control, .form-select {
+  border-color: var(--bs-border-color);
+  background: var(--bs-body-bg);
+}
+.form-control:focus, .form-select:focus {
+  border-color: color-mix(in srgb, var(--bs-primary) 35%, var(--bs-border-color));
+  box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--bs-primary) 18%, transparent);
+}
+
+/* Badges suaves */
+.bg-primary-subtle { background-color: color-mix(in srgb, var(--bs-primary) 12%, transparent) !important; }
+.text-primary-emphasis { color: color-mix(in srgb, var(--bs-primary) 70%, black) !important; }
+.bg-secondary-subtle { background-color: color-mix(in srgb, var(--bs-secondary) 12%, transparent) !important; }
+.text-secondary-emphasis { color: color-mix(in srgb, var(--bs-secondary) 70%, black) !important; }
+
+/* Responsive */
+@media (max-width: 992px) {
+  .ft-group { width: 100%; }
+  .ft-vr { display: none; }
+  .ft-group.ft-apply { min-width: unset; }
+}
+
+ .kpi-bars {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .kpi-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    width: auto;
+    max-width: 100%;
+  }
+  .kpi-icon {
+    width: 42px; height: 42px; min-width: 42px;
+    border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .kpi-content { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .kpi-label   { font-size: 1.25rem; font-weight: 700; }
+  .kpi-value   { font-size: 1.7rem; font-weight: 800; }
+
+  /* Azul (Active Policies) */
+  .kpi--blue { border: 1px solid rgba(13,110,253,0.35); background: rgba(13,110,253,0.06); }
+  .kpi--blue .kpi-icon  { background: rgba(13,110,253,0.12); color: #0b5ed7; }
+  .kpi--blue .kpi-label { color: #0b5ed7; }
+  .kpi--blue .kpi-value { color: #0b3d91; }
+
+  /* Rojo (Missing CSR/Producer) */
+  .kpi--red { border: 1px solid rgba(220,53,69,0.35); background: rgba(220,53,69,0.06); }
+  .kpi--red .kpi-icon  { background: rgba(220,53,69,0.12); color: #dc3545; }
+  .kpi--red .kpi-label { color: #dc3545; }
+  .kpi--red .kpi-value { color: #b02a37; }
+
   </style>
 
 </head>
@@ -443,39 +588,29 @@
 <% } %>
 
           
- <%
-  const path = (typeof currentPath === 'string') ? currentPath : '';
-  const canSeeFK = (typeof canSeeFranchiseSection !== 'undefined')
-    ? canSeeFranchiseSection
-    : (user && (user.location_type === 1 || (user.department && user.department.trim() === 'Marketing & IT')));
-%>
 
-<% if (canSeeFK) { %>
-  <li class="menu-header small text-uppercase">
-    <span class="menu-header-text" data-i18n="FRANCHISE">FRANCHISE</span>
-  </li>
+ <li class="menu-header small text-uppercase">
+  <span class="menu-header-text" data-i18n="FRANCHISE">FRANCHISE</span>
+</li>
 
-  <li class="menu-item <%= path.startsWith('/franchise-kpis') ? 'active' : '' %>">
-    <a href="/franchise-kpis" class="menu-link">
-      <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
-      <div data-i18n="Renewals">Renewals</div>
-    </a>
-  </li>
+<li class="menu-item">
+  <a href="/franchise-kpis" class="menu-link">
+    <i class="fas fa-sync-alt" style="margin-right: 8px;"></i>
+    <div data-i18n="Renewals">Renewals</div>
+  </a>
+</li>
 
-
-
-  <li class="menu-item active <%= path.startsWith('/franchise-errors') ? 'active' : '' %>">
-    <a href="/franchise-errors" class="menu-link">
-      <i class="menu-icon tf-icons ti ti-alert-triangle"></i>
-      <div data-i18n="Errors">Errors</div>
-    </a>
-  </li>
+<li class="menu-item active">
+  <a href="/franchise-errors" class="menu-link">
+    <i class="menu-icon tf-icons ti ti-alert-triangle"></i>
+    <div data-i18n="Errors">Errors</div>
+  </a>
+</li>
 
 
 
 
-
-   <% } %>  
+  
         </ul>
 
       </aside>
@@ -613,27 +748,38 @@
         </nav>
 
         <!-- / Navbar -->
-
 <!-- Content -->
 
 <div class="my-3"></div>
+
+<%
+// Build a query string for nav links that preserves location and active state
+const navParams = [];
+if (typeof locationId !== 'undefined' && locationId) {
+  navParams.push('location=' + encodeURIComponent(locationId));
+}
+if (typeof activeOnly !== 'undefined' && activeOnly) {
+  navParams.push('active=1');
+}
+const navQS = navParams.length ? ('?' + navParams.join('&')) : '';
+%>
 
 <ul class="nav nav-pills flex-column flex-md-row mb-4 mx-2 mx-md-4">
 
   <li class="nav-item">
     <a
       class="nav-link <%= (currentPath || '').startsWith('/users/policy-report-by-location') ? 'active' : '' %>"
-      href="/users/policy-report-by-location<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>"
+      href="/users/policy-report-by-location<%= navQS %>"
     >
       <i class="ti ti-report ti-xs me-1"></i>
-      Policy Report
+      Binder Errors
     </a>
   </li>
 
   <li class="nav-item">
     <a
       class="nav-link <%= (currentPath || '').startsWith('/users/missing-csr-producer') ? 'active' : '' %>"
-      href="/users/missing-csr-producer<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>"
+      href="/users/missing-csr-producer<%= navQS %>"
     >
       <i class="ti ti-user-exclamation ti-xs me-1"></i>
       Missing CSR/Producer
@@ -643,61 +789,149 @@
   <li class="nav-item">
     <a
       class="nav-link <%= (currentPath || '').startsWith('/users/missing-contact-errors') ? 'active' : '' %>"
-      href="/users/missing-contact-errors<%= (typeof locationId !== 'undefined' && locationId) ? ('?location=' + encodeURIComponent(locationId)) : '' %>"
+      href="/users/missing-contact-errors<%= navQS %>"
     >
       <i class="ti ti-mail-x ti-xs me-1"></i>
       Missing Contact Info
     </a>
   </li>
 
-
 </ul>
 
-<!-- Selector de fechas + filtro de franquicia/location -->
 <div class="mx-2 mx-md-4 mb-4">
-  <div class="card shadow">
-    <div class="card-body">
-      <div class="d-flex flex-wrap align-items-center gap-2">
-        <!-- Fechas -->
-        <div class="d-flex align-items-center gap-2">
-          <label for="mcp-start" class="form-label mb-0">Start</label>
-          <input type="date" id="mcp-start" class="form-control form-control-sm"
-                 style="min-width:120px; max-width:140px;"
-                 value="<%= initialRange?.startISO || '' %>" />
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <label for="mcp-end" class="form-label mb-0">End</label>
-          <input type="date" id="mcp-end" class="form-control form-control-sm"
-                 style="min-width:120px; max-width:140px;"
-                 value="<%= initialRange?.endISO || '' %>" />
-        </div>
+  <div class="filter-toolbar shadow-sm">
+    <div class="d-flex flex-wrap align-items-stretch gap-3">
 
-        <!-- Botón Apply -->
-        <button class="btn btn-primary btn-sm" id="mcp-apply" type="button">
-          <i class="ti ti-refresh me-1"></i> Apply
-        </button>
-
-        <!-- Selector de franquicia/location (sin opción "All Franchises") -->
-        <% if (user.location_type === 1 && Array.isArray(franchises) && franchises.length > 0) { %>
-          <% var selectedId = typeof locationId !== 'undefined' ? locationId : ""; %>
-          <select id="location-select" class="form-select form-select-sm"
-                  style="width:160px; min-width:120px; max-width:180px;">
-            <% franchises.forEach(function(franchise) { %>
-              <option value="<%= franchise.location_id %>" <%= String(franchise.location_id) === String(selectedId) ? 'selected' : '' %>>
-                <%= franchise.alias %>
-              </option>
-            <% }); %>
-          </select>
-        <% } else { %>
-          <span class="badge bg-primary text-white" id="mcp-selected-range">
-            <%= user.location_alias || "—" %>
-          </span>
-        <% } %>
+      <!-- Grupo: Fechas -->
+      <div class="ft-group">
+        <div class="ft-header">
+          <span class="ft-icon" aria-hidden="true"><i class="ti ti-calendar"></i></span>
+          <span class="ft-label">Dates</span>
+        </div>
+        <div class="ft-body">
+          <div class="input-group input-group-sm">
+            <input
+              type="text"
+              id="mcp-start"
+              class="form-control glass-calendar"
+              value="<%= initialRange?.startISO || '' %>"
+              placeholder="YYYY-MM-DD"
+              aria-label="Start date"
+              autocomplete="off"
+            />
+          </div>
+          <span class="ft-sep">to</span>
+          <div class="input-group input-group-sm">
+            <input
+              type="text"
+              id="mcp-end"
+              class="form-control glass-calendar"
+              value="<%= initialRange?.endISO || '' %>"
+              placeholder="YYYY-MM-DD"
+              aria-label="End date"
+              autocomplete="off"
+            />
+          </div>
+        </div>
       </div>
+
+      <div class="ft-vr" aria-hidden="true"></div>
+
+      <!-- Grupo: Franquicia (Corporate) -->
+      <% if (user.location_type === 1 && Array.isArray(franchises) && franchises.length > 0) { %>
+        <% var selectedId = typeof locationId !== 'undefined' ? locationId : ""; %>
+        <div class="ft-group">
+          <div class="ft-header">
+            <span class="ft-icon" aria-hidden="true"><i class="ti ti-building-store"></i></span>
+            <span class="ft-label">Franchise</span>
+          </div>
+          <div class="ft-body">
+            <div class="input-group input-group-sm" style="min-width: 220px;">
+              <span class="input-group-text"><i class="ti ti-map-pin"></i></span>
+              <select id="location-select" class="form-select">
+                <% franchises.forEach(function(franchise) { %>
+                  <option value="<%= franchise.location_id %>" <%= String(franchise.location_id) === String(selectedId) ? 'selected' : '' %>>
+                    <%= franchise.alias %>
+                  </option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+        </div>
+      <% } else { %>
+        <!-- Grupo: Franchise (fijo, no corporativo) -->
+        <div class="ft-group">
+          <div class="ft-header">
+            <span class="ft-icon" aria-hidden="true"><i class="ti ti-building"></i></span>
+            <span class="ft-label">Franchise</span>
+          </div>
+          <div class="ft-body">
+            <span class="badge bg-secondary-subtle text-secondary-emphasis">
+              <%= user.location_alias || user.alias || user.location_name || "—" %>
+            </span>
+          </div>
+        </div>
+      <% } %>
+
+      <div class="ft-vr" aria-hidden="true"></div>
+
+      <!-- Grupo: Active -->
+      <div class="ft-group">
+        <div class="ft-header">
+          <span class="ft-icon" aria-hidden="true"><i class="ti ti-activity"></i></span>
+          <span class="ft-label">Active</span>
+        </div>
+        <div class="ft-body d-flex align-items-center">
+          <div class="form-check form-switch m-0">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="mcp-active-only"
+              value="1"
+              <%= activeOnly ? 'checked' : '' %>
+              aria-label="Only active policies"
+            />
+            <label class="form-check-label ms-1" for="mcp-active-only">Only</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Apply -->
+      <div class="ft-group ft-apply">
+        <div class="ft-body w-100">
+          <button class="btn btn-primary btn-sm w-100" id="mcp-apply" type="button">Apply</button>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
 
+<!-- KPIs debajo de filtros -->
+<div class="mx-2 mx-md-4 mt-2">
+  <div class="kpi-bars" role="region" aria-label="Summary KPIs">
+    <!-- Active Policies -->
+    <div class="kpi-bar kpi--blue" role="status" aria-live="polite">
+      <div class="kpi-icon" aria-hidden="true"><i class="ti ti-sum"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Active Policies</div>
+        <div class="kpi-value" id="mcp-active-policies-count">
+          <%= typeof activePoliciesCount === 'number' ? activePoliciesCount.toLocaleString('en-US') : '0' %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Missing CSR/Producer => total visible en DataTable -->
+    <div class="kpi-bar kpi--red" role="status" aria-live="polite">
+      <div class="kpi-icon" aria-hidden="true"><i class="ti ti-alert-triangle"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-label">Missing CSR/Producer</div>
+        <div class="kpi-value" id="mcp-missing-total-count">0</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Tabla -->
 <div class="mx-2 mx-md-4 my-4">
@@ -718,7 +952,7 @@
               <th>Binder Date</th>
               <th>Effective Date</th>
               <th>Location</th>
-              <th>Policy Status</th> 
+              <th>Policy Status</th>
             </tr>
           </thead>
           <tbody></tbody>
