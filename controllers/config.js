@@ -4,7 +4,7 @@ import { pool } from "../config/dbConfig.js";
 const getMonthlyGoal = async () => {
   try {
     const result = await pool.query(
-      `SELECT goal_amount FROM entra.goals ORDER BY changed_at DESC LIMIT 1`
+      `SELECT goal_amount FROM intranet.goals ORDER BY changed_at DESC LIMIT 1`
     );
     return result.rows.length > 0 ? Number(result.rows[0].goal_amount) : 10000000;
   } catch (error) {
@@ -19,7 +19,7 @@ const setMonthlyGoal = async (req, res) => {
   try {
     // Guarda el nuevo goal en la tabla con la fecha/hora actual
     await pool.query(
-      `INSERT INTO entra.goals (goal_amount) VALUES ($1)`,
+      `INSERT INTO intranet.goals (goal_amount) VALUES ($1)`,
       [newGoal]
     );
   } catch (error) {
@@ -48,12 +48,12 @@ const headcarrier = async (req, res) => {
   let lastChanged = null;
   let changesCount = 0;
   try {
-    const lastGoal = await pool.query('SELECT goal_amount, changed_at FROM entra.goals ORDER BY changed_at DESC LIMIT 1');
+    const lastGoal = await pool.query('SELECT goal_amount, changed_at FROM intranet.goals ORDER BY changed_at DESC LIMIT 1');
     if (lastGoal.rows.length > 0) {
       goal = Number(lastGoal.rows[0].goal_amount);
       lastChanged = lastGoal.rows[0].changed_at;
     }
-    const countResult = await pool.query('SELECT COUNT(*) FROM entra.goals');
+    const countResult = await pool.query('SELECT COUNT(*) FROM intranet.goals');
     changesCount = Number(countResult.rows[0].count || 0);
   } catch (error) {
     console.log("Error fetching goal data:", error);
@@ -73,7 +73,7 @@ const addHeadCarrier = (req, res) => {
   pool.query(
     `INSERT INTO qq.head_carriers(name, contact_id) VALUES ($1, $2)`,
     [name, carrier_id],
-    (err, result) => {
+    (err) => {
       if (err) {
         return res.status(400).json({
           message: `Error, Head Carrier not inserted!`,
@@ -84,7 +84,7 @@ const addHeadCarrier = (req, res) => {
   pool.query(
     `UPDATE qq.contacts SET head_comp=$1 WHERE entity_id=$2`,
     [name, carrier_id],
-    (err, result) => {
+    (err) => {
       if (err) {
         return res.status(400).json({
           message: `Error, Head Carrier not updated in QQ!`,
@@ -121,7 +121,7 @@ const addCarrier = (req, res) => {
   pool.query(
     `INSERT INTO qq.head_carriers(name, contact_id) VALUES ($1, $2)`,
     [name1, carrier_id],
-    (err, result) => {
+    (err) => {
       if (err) {
         return res.status(400).json({
           message: `Insert carrier Error`,
@@ -132,7 +132,7 @@ const addCarrier = (req, res) => {
   pool.query(
     `UPDATE qq.contacts SET head_comp=$1 WHERE entity_id=$2`,
     [name1, carrier_id],
-    (err, result) => {
+    (err) => {
       if (err) {
         return res.status(400).json({
           message: `Error, Head Carrier not updated in QQ!`,
@@ -148,7 +148,7 @@ const deleteCarrier = (req, res) => {
   pool.query(
     `DELETE FROM qq.head_carriers WHERE name = $1 AND contact_id = $2`,
     [name2, contact_id],
-    (err, result) => {
+    (err) => {
       if (err) {
         return res.status(500).json({
           message: `Delete carrier Error`,
@@ -159,7 +159,7 @@ const deleteCarrier = (req, res) => {
   pool.query(
     `UPDATE qq.contacts SET head_comp=display_name WHERE entity_id=$1`,
     [contact_id],
-    (err, result) => {
+    (err) => {
       if (err) {
         return res.status(400).json({
           message: `Error, Head Carrier not updated in QQ!`,

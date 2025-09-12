@@ -28,7 +28,7 @@ async function verifyEmail(apiKey, email) {
 async function upsertContactEmailStatus(contactId, email, status) {
   await pool.query(
     `
-    INSERT INTO admin.contact_email_checks (contact_id, email, email_status, email_checked_on)
+    INSERT INTO intranet.contact_email_checks (contact_id, email, email_status, email_checked_on)
     VALUES ($1, $2, $3, NOW())
     ON CONFLICT (contact_id)
     DO UPDATE SET
@@ -81,7 +81,7 @@ export const verifyContactsEmails = async (req, res) => {
         SELECT c.entity_id, c.email
         FROM qq.contacts c
         JOIN qq.locations l ON c.location_id = l.location_id
-        LEFT JOIN admin.contact_email_checks ce ON ce.contact_id = c.entity_id
+        LEFT JOIN intranet.contact_email_checks ce ON ce.contact_id = c.entity_id
         WHERE l.location_type = 2
           AND c.email IS NOT NULL
           AND btrim(c.email) <> ''
@@ -97,7 +97,7 @@ export const verifyContactsEmails = async (req, res) => {
         `
         SELECT c.entity_id, c.email
         FROM qq.contacts c
-        LEFT JOIN admin.contact_email_checks ce ON ce.contact_id = c.entity_id
+        LEFT JOIN intranet.contact_email_checks ce ON ce.contact_id = c.entity_id
         WHERE c.location_id = $1
           AND c.email IS NOT NULL
           AND btrim(c.email) <> ''
@@ -201,7 +201,7 @@ export const fetchMissingContactErrors = async (req, res) => {
       for (const row of rows) {
         if (row.email && row.email.trim() !== "") {
           const checkStatus = await pool.query(
-            `SELECT email_status FROM admin.contact_email_checks WHERE contact_id = $1`,
+            `SELECT email_status FROM intranet.contact_email_checks WHERE contact_id = $1`,
             [row.customer_id]
           );
           const status = checkStatus.rows[0]?.email_status;

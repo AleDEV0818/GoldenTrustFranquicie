@@ -1,9 +1,11 @@
 import { pool } from "../config/dbConfig.js";
 
-const CONTROLLER_VERSION = "fkpis-2025-08-13-01";
+const CONTROLLER_VERSION = "fkpis-2025-09-12-01";
 const FKPI_DEBUG = process.env.FKPI_DEBUG === "1";
+const SYNC_REFRESH_ON_STALE = process.env.FKPI_SYNC_REFRESH_ON_STALE === "1"; // Opcional: refresco inmediato si stale
 
 // ====== DATE UTILITIES ======
+// Aunque ya solo conservamos la última snapshot, mantenemos estas utilidades para compatibilidad con la firma de funciones SQL.
 function toISODate(date) {
   return date.toISOString().split("T")[0];
 }
@@ -45,25 +47,46 @@ function normalizePairPercents(text) {
   return `${normPct(aRaw)} / ${normPct(bRaw)}`;
 }
 
-// ====== VIEW (SSR con datos de caché) ======
+// ====== INTERNAL HELPERS ======
+async function loadMeta(dateISO) {
+  const metaSql = "SELECT * FROM intranet.franchise_cache_meta($1::date)";
+  const r = await pool.query(metaSql, [dateISO]);
+  return r.rows?.[0] || null;
+}
+
+async function runSyncRefresh(dateISO) {
+  // Recalcula completamente la tabla (solo una snapshot)
+  await pool.query("SELECT intranet.refresh_franchise_cache($1::date, true)", [dateISO]);
+}
+
+// ====== VIEW (SSR) ======
+// Render inicial del panel (Server-Side Render). Si no hay data o está stale (y está activado el modo sync), refrescamos en la misma request.
 export const renderFranchiseKpisPanel = async (req, res) => {
   try {
     const baseUrl =
       process.env.FIRST_PROJECT_BASE_URL || `${req.protocol}://${req.get("host")}`;
+
+    // En el nuevo modelo, realmente basta con hoy; mantenemos el cálculo por compatibilidad.
     const { endISO } = getMonthRangeUsingPlusOffset(0);
 
-    // Lee meta y, si no hay caché, puebla una vez sincrónicamente
-    const metaSql = "SELECT * FROM intranet.franchise_cache_meta($1::date)";
-    let metaRes = await pool.query(metaSql, [endISO]);
-    let meta = metaRes.rows?.[0] || null;
+    let meta = await loadMeta(endISO);
 
-    if (!meta || meta.used_date === null) {
-      await pool.query("SELECT intranet.refresh_franchise_cache($1::date, true)", [endISO]);
-      metaRes = await pool.query(metaSql, [endISO]);
-      meta = metaRes.rows?.[0] || null;
+    // Sin datos: refresco inmediato.
+    const noSnapshotYet = !meta || meta.used_date === null;
+
+    // Stale: según configuración, refresco inmediato (esto fuerza que SSR sirva siempre datos lo más frescos posible).
+    const isStale = Boolean(meta?.is_stale);
+    if (noSnapshotYet || (isStale && SYNC_REFRESH_ON_STALE)) {
+      if (FKPI_DEBUG) {
+        console.log(
+          `[FKPIS][SSR] Ejecutando refresh síncrono. noSnapshotYet=${noSnapshotYet} isStale=${isStale}`
+        );
+      }
+      await runSyncRefresh(endISO);
+      meta = await loadMeta(endISO); // Reload
     }
 
-    // Lee SIEMPRE desde caché para pintar SSR inmediatamente
+    // Lecturas (siempre desde cache, que ahora solo tiene la última snapshot)
     const [tableResult, totalsResult] = await Promise.all([
       pool.query(
         "SELECT * FROM intranet.franchise_dashboard_fast($1::date) ORDER BY franchise ASC",
@@ -96,7 +119,6 @@ export const renderFranchiseKpisPanel = async (req, res) => {
       user: req.user,
       controllerVersion: CONTROLLER_VERSION,
 
-      // SSR payload (clave para no ver tabla vacía)
       initialFranchises,
       initialPanelMetrics,
       initialMeta: meta,
@@ -111,36 +133,42 @@ export const renderFranchiseKpisPanel = async (req, res) => {
   }
 };
 
-// ====== API: lee caché; encola si poke=1; silent polling (sin banner) ======
+// ====== API (Polling / Async Refresh) ======
+// Devuelve estado actual. Si el cliente manda poke=1 y no hay refresh en curso, encolamos job.
+// El worker (inline o externo) refresca la única snapshot sobrescribiendo la tabla.
 export const fetchFranchiseKpisPanelData = async (req, res) => {
   const monthOffset = Number(req.query.month) || 0;
   const { endISO } = getMonthRangeUsingPlusOffset(monthOffset);
 
   try {
-    const metaSql = "SELECT * FROM intranet.franchise_cache_meta($1::date)";
-
-    // Meta inicial
-    let metaRes = await pool.query(metaSql, [endISO]);
-    let meta = metaRes.rows?.[0] || null;
+    let meta = await loadMeta(endISO);
     const isRefreshing = Boolean(meta?.refreshing);
     const shouldPoke = req.query.poke === "1";
 
-    // Intentar encolar si no está refrescando y el cliente lo pidió
     let enqueued = false;
+
+    // Si no está refrescando y el cliente pide poke, encolamos job
     if (!isRefreshing && shouldPoke) {
       try {
         const r = await pool.query("SELECT intranet.enqueue_kpi_refresh($1::date) AS ok", [endISO]);
         enqueued = Boolean(r.rows?.[0]?.ok);
-        // Si no hay worker en Node activado, corre el worker inline para procesar el job inmediatamente
-        if (process.env.ENABLE_KPI_WORKER !== "1") {
+        if (FKPI_DEBUG) {
+          console.log(
+            `[FKPIS][API] poke=${shouldPoke} enqueued=${enqueued} enableWorkerInline=${
+              process.env.ENABLE_KPI_WORKER !== "1"
+            }`
+          );
+        }
+        // Worker inline (si no hay worker externo)
+        if (enqueued && process.env.ENABLE_KPI_WORKER !== "1") {
           await pool.query("SELECT intranet.run_kpi_refresh_worker()");
         }
-      } catch (e) {
-        if (FKPI_DEBUG) console.warn("[FKPIS] enqueue/worker error:", e.message);
+      } catch (err) {
+        if (FKPI_DEBUG) console.warn("[FKPIS][API] enqueue/worker error:", err.message);
       }
     }
 
-    // Lee datos actuales desde caché
+    // Lectura de datos actuales
     const [tableResult, totalsResult] = await Promise.all([
       pool.query(
         "SELECT * FROM intranet.franchise_dashboard_fast($1::date) ORDER BY franchise ASC",
@@ -165,13 +193,10 @@ export const fetchFranchiseKpisPanelData = async (req, res) => {
       percent_and_max: normalizePairPercents(rawTotals.percent_and_max),
     };
 
-    // Meta después de posible encolado
-    metaRes = await pool.query(metaSql, [endISO]);
-    meta = metaRes.rows?.[0] || null;
-
+    // Refrescamos meta tras posible encolado/worker
+    meta = await loadMeta(endISO);
     const lastUpdatedAtISO = meta?.as_of ? new Date(meta.as_of).toISOString() : null;
 
-    // Polling silencioso si hay refresh en curso o acabamos de encolar
     const shouldPoll = Boolean(meta?.refreshing || enqueued);
     const pollMs = Number(process.env.KPI_POLL_MS || 10000);
 
@@ -183,7 +208,7 @@ export const fetchFranchiseKpisPanelData = async (req, res) => {
       controllerVersion: CONTROLLER_VERSION,
       lastUpdatedAtISO,
       shouldPoll,
-      pollMs
+      pollMs,
     });
   } catch (error) {
     console.error("Error in fetchFranchiseKpisPanelData:", error);
@@ -197,9 +222,11 @@ export const fetchFranchiseKpisPanelData = async (req, res) => {
 // ====== DEBUG ======
 export const debugFranchiseTotals = async (req, res) => {
   try {
+    // El parámetro date se mantiene para compatibilidad; en la práctica siempre consultará la única snapshot.
     const d = req.query.date ? toISODate(new Date(req.query.date)) : toISODate(new Date());
     const totalsSql = "SELECT * FROM intranet.franchise_kpis_totals($1::date)";
     const metaSql = "SELECT * FROM intranet.franchise_cache_meta($1::date)";
+
     const [totalsR, metaR] = await Promise.all([pool.query(totalsSql, [d]), pool.query(metaSql, [d])]);
 
     const raw = totalsR.rows?.[0] || null;

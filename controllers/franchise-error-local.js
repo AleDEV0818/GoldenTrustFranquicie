@@ -19,10 +19,9 @@ const LOGO_PX_H = 120;
 const LOGO_COL_START = 1;   // A
 const LOGO_COL_END   = 4;   // D
 const TEXT_START_COL = LOGO_COL_END + 1; // E (solo primera hoja)
-const SUMMARY_TEXT_LAST_COL = 6; // F (solicitado)
+const SUMMARY_TEXT_LAST_COL = 6; // F
 const PANEL_ROWS = 5;
-const SEPARATOR_ROW = false;     // SIN fila en blanco
-const TABLE_START_ROW = 6;       // Cabecera de tabla en fila 6
+const TABLE_START_ROW = 6;  // Cabecera de tabla en fila 6
 
 // Ajustes
 const LOGO_TIGHT = false;
@@ -177,7 +176,6 @@ function createPanel(ws, franchiseName, periodLabel, logoId, { showText = true }
   }
 
   if(showText){
-    // Forzado a columna F
     for(let c=TEXT_START_COL;c<=SUMMARY_TEXT_LAST_COL;c++){
       const col=ws.getColumn(c);
       col.width=20;
@@ -185,8 +183,8 @@ function createPanel(ws, franchiseName, periodLabel, logoId, { showText = true }
     }
     drawBox(ws,{ startCol:TEXT_START_COL, endCol:SUMMARY_TEXT_LAST_COL });
 
-    const L=colToLetter(TEXT_START_COL); // E
-    const R=colToLetter(SUMMARY_TEXT_LAST_COL); // F
+    const L=colToLetter(TEXT_START_COL);
+    const R=colToLetter(SUMMARY_TEXT_LAST_COL);
 
     ws.mergeCells(`${L}1:${R}1`);
     const c1=ws.getCell(`${L}1`);
@@ -363,6 +361,7 @@ function writeVerticalSummary(ws, summary, startRow){
 
 // ---------------- SQL / DATA ----------------
 const LOCATION_ID_DEFAULT = Number(process.env.REPORT_LOCATION_ID) || 22769;
+
 async function getLocationAlias(location_id){
   const { rows }=await pool.query(
     `SELECT COALESCE(alias, location_name) AS alias FROM qq.locations WHERE location_id=$1`,
@@ -370,6 +369,18 @@ async function getLocationAlias(location_id){
   );
   return rows[0]?.alias||null;
 }
+
+// Todas las locations de tipo franquicia
+async function getFranchiseLocations(){
+  const { rows } = await pool.query(
+    `SELECT location_id, COALESCE(alias, location_name) AS alias
+     FROM qq.locations
+     WHERE location_type = 2
+     ORDER BY alias NULLS LAST, location_id`
+  );
+  return rows;
+}
+
 function normalizeRange(startISO,endISO){
   return IGNORE_DATE_RANGE ? { start:null, end:null } : { start:startISO, end:endISO };
 }
@@ -438,138 +449,180 @@ function computeSummaryFromDetails({ binderErrors, missingCSRRows, customersNoPh
   return { binder_errors, csr_total, producer_total, missing_any_total, missing_contact_info, total_errors };
 }
 
-// ---------------- MAIN ----------------
+// ---------------- GENERACIÓN DE EXCEL (por franquicia) ----------------
+async function generateExcelForLocation({ location_id, outDir, outPathOverride }){
+  const { startISO: defStart, endISO: defEnd }=getRange();
+  const startISO=IGNORE_DATE_RANGE?null:defStart;
+  const endISO=IGNORE_DATE_RANGE?null:defEnd;
+
+  const locationAlias=(await getLocationAlias(location_id))||`location-${location_id}`;
+  const aliasForFilename=sanitizeFilename(locationAlias,`location-${location_id}`);
+  const periodLabel=prettyPeriod(defStart,defEnd);
+
+  const outBaseDir=path.resolve(outDir || path.join(process.cwd(),"out"));
+  if(!fs.existsSync(outBaseDir)) fs.mkdirSync(outBaseDir,{recursive:true});
+
+  // Nota: si hay aliases duplicados, evita colisión con el id
+  const defaultName=`franchise-errors-active-${aliasForFilename}-${location_id}.xlsx`;
+  const outPath=outPathOverride
+    ? path.resolve(outPathOverride)
+    : path.resolve(path.join(outBaseDir,defaultName));
+
+  console.log(`[REPORT] Generating Excel for "${locationAlias}" (id=${location_id}) -> ${outPath}`);
+
+  const [
+    binderErrors,
+    missingCSR,
+    customersNoPhone,
+    customersNoEmail,
+    customersInvalidEmail
+  ]=await Promise.all([
+    getBinderErrorsActive(location_id,startISO,endISO),
+    getMissingCsrProducerActive(location_id,startISO,endISO),
+    getCustomersNoPhone(location_id),
+    getCustomersNoEmail(location_id),
+    getCustomersInvalidEmail(location_id)
+  ]);
+  const activeCounts=await getActiveCounts(location_id,startISO,endISO);
+  const summary=computeSummaryFromDetails({
+    binderErrors,
+    missingCSRRows:missingCSR,
+    customersNoPhone,
+    customersNoEmail,
+    customersInvalidEmail
+  });
+
+  const workbook=new ExcelJS.Workbook();
+  workbook.creator="GTI Reports";
+  workbook.created=new Date();
+  const logoId=await addWorkbookLogo(workbook);
+
+  // SUMMARY (única hoja con texto hasta F)
+  const sheetSummary=workbook.addWorksheet(cleanSheetName("SUMMARY"));
+  const summaryHeaderIdx=createPanel(sheetSummary, locationAlias, periodLabel, logoId, { showText:true });
+  writeVerticalSummary(sheetSummary, { ...summary, ...activeCounts }, summaryHeaderIdx);
+  formatTable(sheetSummary, summaryHeaderIdx);
+
+  function addDataSheet(name, columnsDef, rows){
+    const ws=workbook.addWorksheet(cleanSheetName(name));
+    // Panel solo logo (sin texto) y tabla fila 6
+    const headerRowIdx=createPanel(ws, locationAlias, periodLabel, logoId, { showText:false });
+
+    const headerRow=ws.getRow(headerRowIdx);
+    columnsDef.forEach((col,i)=>{
+      headerRow.getCell(i+1).value=col.header;
+    });
+    headerRow.commit();
+
+    rows.forEach(obj=>{
+      ws.addRow(columnsDef.map(c=> obj[c.key] ?? null));
+    });
+
+    formatTable(ws, headerRowIdx);
+  }
+
+  addDataSheet("Binder Errors", [
+    { header:"Policy #", key:"policy_number" },
+    { header:"Line of Business", key:"line_of_business" },
+    { header:"Business Type", key:"business_type" },
+    { header:"CSR", key:"csr" },
+    { header:"Producer", key:"producer" },
+    { header:"Binder Date", key:"binder_date" },
+    { header:"Effective Date", key:"effective_date" },
+    { header:"Location", key:"location" },
+    { header:"Policy Status", key:"policy_status" }
+  ], binderErrors);
+
+  addDataSheet("Missing CSR/Producer", [
+    { header:"Policy #", key:"policy_number" },
+    { header:"Line of Business", key:"line_of_business" },
+    { header:"Business Type", key:"business_type" },
+    { header:"CSR", key:"csr" },
+    { header:"Producer", key:"producer" },
+    { header:"Binder Date", key:"binder_date" },
+    { header:"Effective Date", key:"effective_date" },
+    { header:"Location", key:"location" },
+    { header:"Policy Status", key:"policy_status" },
+    { header:"Missing Fields", key:"missing_fields" }
+  ], missingCSR);
+
+  addDataSheet("Customers No Phone", [
+    { header:"Customer ID", key:"customer_id" },
+    { header:"Customer", key:"customer_display_name" },
+    { header:"Location", key:"location_alias" },
+    { header:"Type", key:"type_display" },
+    { header:"Email", key:"email" },
+    { header:"Phone", key:"phone" }
+  ], customersNoPhone);
+
+  addDataSheet("Customers No Email", [
+    { header:"Customer ID", key:"customer_id" },
+    { header:"Customer", key:"customer_display_name" },
+    { header:"Location", key:"location_alias" },
+    { header:"Type", key:"type_display" },
+    { header:"Email", key:"email" },
+    { header:"Phone", key:"phone" }
+  ], customersNoEmail);
+
+  addDataSheet("Customers Invalid Email", [
+    { header:"Customer ID", key:"customer_id" },
+    { header:"Customer", key:"customer_display_name" },
+    { header:"Location", key:"location_alias" },
+    { header:"Type", key:"type_display" },
+    { header:"Email", key:"email" },
+    { header:"Phone", key:"phone" }
+  ], customersInvalidEmail);
+
+  await workbook.xlsx.writeFile(outPath);
+  console.log("[REPORT] Excel generado OK.");
+  return { outPath, location_id, alias: locationAlias };
+}
+
+// ---------------- API PÚBLICA ----------------
 export async function generateFranchiseErrorsExcelLocal(){
   try{
     const cliLocation=parseInt(parseArg("--location"),10);
     const location_id=Number.isFinite(cliLocation)?cliLocation:(Number(process.env.REPORT_LOCATION_ID)||LOCATION_ID_DEFAULT);
+    const outArg=parseArg("--out"); // archivo de salida explícito (opcional)
 
-    const outArg=parseArg("--out");
-    const { startISO: defStart, endISO: defEnd }=getRange();
-    const startISO=IGNORE_DATE_RANGE?null:defStart;
-    const endISO=IGNORE_DATE_RANGE?null:defEnd;
-
-    const locationAlias=(await getLocationAlias(location_id))||`location-${location_id}`;
-    const aliasForFilename=sanitizeFilename(locationAlias,`location-${location_id}`);
-    const periodLabel=prettyPeriod(defStart,defEnd);
-
-    const outDir=path.resolve(process.cwd(),"out");
-    if(!fs.existsSync(outDir)) fs.mkdirSync(outDir,{recursive:true});
-    const defaultName=`franchise-errors-active-${aliasForFilename}.xlsx`;
-    const outPath=path.resolve(outArg||path.join(outDir,defaultName));
-
-    console.log(`[REPORT] Generating LOCAL Excel for "${locationAlias}" (id=${location_id}) -> ${outPath}`);
-
-    const [
-      binderErrors,
-      missingCSR,
-      customersNoPhone,
-      customersNoEmail,
-      customersInvalidEmail
-    ]=await Promise.all([
-      getBinderErrorsActive(location_id,startISO,endISO),
-      getMissingCsrProducerActive(location_id,startISO,endISO),
-      getCustomersNoPhone(location_id),
-      getCustomersNoEmail(location_id),
-      getCustomersInvalidEmail(location_id)
-    ]);
-    const activeCounts=await getActiveCounts(location_id,startISO,endISO);
-    const summary=computeSummaryFromDetails({
-      binderErrors,
-      missingCSRRows:missingCSR,
-      customersNoPhone,
-      customersNoEmail,
-      customersInvalidEmail
+    const res = await generateExcelForLocation({
+      location_id,
+      outDir: null,
+      outPathOverride: outArg || null
     });
-
-    const workbook=new ExcelJS.Workbook();
-    workbook.creator="GTI Reports";
-    workbook.created=new Date();
-    const logoId=await addWorkbookLogo(workbook);
-
-    // SUMMARY (única hoja con texto hasta F)
-    const sheetSummary=workbook.addWorksheet(cleanSheetName("SUMMARY"));
-    const summaryHeaderIdx=createPanel(sheetSummary, locationAlias, periodLabel, logoId, { showText:true });
-    writeVerticalSummary(sheetSummary, { ...summary, ...activeCounts }, summaryHeaderIdx);
-    formatTable(sheetSummary, summaryHeaderIdx);
-
-    function addDataSheet(name, columnsDef, rows){
-      const ws=workbook.addWorksheet(cleanSheetName(name));
-      // Panel solo logo (sin texto) y tabla fila 6
-      const headerRowIdx=createPanel(ws, locationAlias, periodLabel, logoId, { showText:false });
-
-      const headerRow=ws.getRow(headerRowIdx);
-      columnsDef.forEach((col,i)=>{
-        headerRow.getCell(i+1).value=col.header;
-      });
-      headerRow.commit();
-
-      rows.forEach(obj=>{
-        ws.addRow(columnsDef.map(c=> obj[c.key] ?? null));
-      });
-
-      formatTable(ws, headerRowIdx);
-    }
-
-    addDataSheet("Binder Errors", [
-      { header:"Policy #", key:"policy_number" },
-      { header:"Line of Business", key:"line_of_business" },
-      { header:"Business Type", key:"business_type" },
-      { header:"CSR", key:"csr" },
-      { header:"Producer", key:"producer" },
-      { header:"Binder Date", key:"binder_date" },
-      { header:"Effective Date", key:"effective_date" },
-      { header:"Location", key:"location" },
-      { header:"Policy Status", key:"policy_status" }
-    ], binderErrors);
-
-    addDataSheet("Missing CSR/Producer", [
-      { header:"Policy #", key:"policy_number" },
-      { header:"Line of Business", key:"line_of_business" },
-      { header:"Business Type", key:"business_type" },
-      { header:"CSR", key:"csr" },
-      { header:"Producer", key:"producer" },
-      { header:"Binder Date", key:"binder_date" },
-      { header:"Effective Date", key:"effective_date" },
-      { header:"Location", key:"location" },
-      { header:"Policy Status", key:"policy_status" },
-      { header:"Missing Fields", key:"missing_fields" }
-    ], missingCSR);
-
-    addDataSheet("Customers No Phone", [
-      { header:"Customer ID", key:"customer_id" },
-      { header:"Customer", key:"customer_display_name" },
-      { header:"Location", key:"location_alias" },
-      { header:"Type", key:"type_display" },
-      { header:"Email", key:"email" },
-      { header:"Phone", key:"phone" }
-    ], customersNoPhone);
-
-    addDataSheet("Customers No Email", [
-      { header:"Customer ID", key:"customer_id" },
-      { header:"Customer", key:"customer_display_name" },
-      { header:"Location", key:"location_alias" },
-      { header:"Type", key:"type_display" },
-      { header:"Email", key:"email" },
-      { header:"Phone", key:"phone" }
-    ], customersNoEmail);
-
-    addDataSheet("Customers Invalid Email", [
-      { header:"Customer ID", key:"customer_id" },
-      { header:"Customer", key:"customer_display_name" },
-      { header:"Location", key:"location_alias" },
-      { header:"Type", key:"type_display" },
-      { header:"Email", key:"email" },
-      { header:"Phone", key:"phone" }
-    ], customersInvalidEmail);
-
-    await workbook.xlsx.writeFile(outPath);
-    console.log("[REPORT] Excel generado OK (SUMMARY head hasta F, tablas fila 6).");
-    return outPath;
+    return res.outPath;
   }catch(e){
     console.error("[REPORT] Error generando archivo local:", e);
     throw e;
   }
+}
+
+// Nuevo: generar un archivo por cada franquicia (location_type = 2)
+export async function generateAllFranchiseErrorsExcels({ outDir } = {}){
+  const list = await getFranchiseLocations();
+  if(!list?.length){
+    console.warn("[REPORT] No se encontraron franquicias (location_type=2).");
+    return [];
+  }
+  const baseOutDir = outDir || parseArg("--out-dir") || path.join(process.cwd(),"out");
+  if(!fs.existsSync(baseOutDir)) fs.mkdirSync(baseOutDir,{recursive:true});
+
+  const results = [];
+  console.log(`[REPORT] Generando reportes para ${list.length} franquicia(s) ...`);
+  for(const loc of list){
+    try{
+      const r = await generateExcelForLocation({
+        location_id: loc.location_id,
+        outDir: baseOutDir
+      });
+      results.push({ ...r, ok: true });
+    }catch(e){
+      console.error(`[REPORT] Error con location_id=${loc.location_id} (${loc.alias||"sin alias"}):`, e?.message||e);
+      results.push({ location_id: loc.location_id, alias: loc.alias||null, ok:false, error: e?.message||String(e) });
+    }
+  }
+  console.log(`[REPORT] Finalizado: ${results.filter(r=>r.ok).length}/${results.length} archivos generados correctamente.`);
+  return results;
 }
 
 // CLI
@@ -581,5 +634,10 @@ const isDirectRun=(()=>{
   }catch{return false;}
 })();
 if(isDirectRun){
-  generateFranchiseErrorsExcelLocal().catch(()=>process.exit(1));
+  const runAll = process.argv.includes("--all-franchises");
+  if(runAll){
+    generateAllFranchiseErrorsExcels().catch(()=>process.exit(1));
+  }else{
+    generateFranchiseErrorsExcelLocal().catch(()=>process.exit(1));
+  }
 }

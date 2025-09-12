@@ -47,7 +47,7 @@ async function safeQuery(query, params = []) {
 async function getCurrentMonthlyGoal() {
   try {
     const result = await pool.query(
-      `SELECT goal_amount FROM entra.goals ORDER BY changed_at DESC LIMIT 1`
+      `SELECT goal_amount FROM intranet.goals ORDER BY changed_at DESC LIMIT 1`
     );
     return result.rows.length > 0 ? Number(result.rows[0].goal_amount) : 10000000;
   } catch (error) {

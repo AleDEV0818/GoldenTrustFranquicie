@@ -150,7 +150,7 @@ export const exportCsv = async (req, res) => {
   }
 };
 
-// Import Excel or CSV and insert/update into admin.code (fuzzy alias match, upsert, cleaning inputs, disables missing codes)
+// Import Excel or CSV and insert/update into intranet.code (fuzzy alias match, upsert, cleaning inputs, disables missing codes)
 export const importCodes = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded." });
@@ -244,7 +244,7 @@ export const importCodes = async (req, res) => {
 
       // UPSERT: insert or update if PK exists, y siempre enabled=true
       const result = await pool.query(
-        `INSERT INTO admin.code (agency, company, code, login, password, location_id, enabled)
+        `INSERT INTO intranet.code (agency, company, code, login, password, location_id, enabled)
          VALUES ($1, $2, $3, $4, $5, $6, true)
          ON CONFLICT (agency, company, code, location_id)
          DO UPDATE SET login = EXCLUDED.login, password = EXCLUDED.password, enabled = true
@@ -261,12 +261,12 @@ export const importCodes = async (req, res) => {
     }
 
     // Desactiva todos los códigos que NO estén en el archivo importado (enabled=false), clave incluye location_id
-    const existing = await pool.query("SELECT agency, company, code, location_id FROM admin.code WHERE enabled = true");
+    const existing = await pool.query("SELECT agency, company, code, location_id FROM intranet.code WHERE enabled = true");
     for (const row of existing.rows) {
       const key = `${row.agency}|||${row.company}|||${row.code}|||${row.location_id}`;
       if (!importedKeys.has(key)) {
         await pool.query(
-          `UPDATE admin.code SET enabled = false WHERE agency = $1 AND company = $2 AND code = $3 AND location_id = $4`,
+          `UPDATE intranet.code SET enabled = false WHERE agency = $1 AND company = $2 AND code = $3 AND location_id = $4`,
           [row.agency, row.company, row.code, row.location_id]
         );
       }
