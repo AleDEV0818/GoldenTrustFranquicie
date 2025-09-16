@@ -244,11 +244,22 @@ $(document).ready(function () {
 
   function searchPolicies() {
     const locations = $('#locations').val() || [];
-    const business_types = $('#business_type').val() || [];
+    let business_types = $('#business_type').val() || [];
     const criteria = $('#criteria').val();
     const dateRangeStr = $('#dates').val();
-    const policy_status = $('#policy_status').val() || [];
-    const lines = $('#lines').length ? $('#lines').val() || [] : [];
+    let policy_status = $('#policy_status').val() || [];
+    let lines = $('#lines').length ? $('#lines').val() || [] : [];
+
+    // Si NO hay ningún filtro seleccionado, toma todos los valores posibles
+    if (business_types.length === 0) {
+      business_types = $('#business_type option').map(function () { return $(this).val(); }).get();
+    }
+    if (policy_status.length === 0) {
+      policy_status = $('#policy_status option').map(function () { return $(this).val(); }).get();
+    }
+    if (lines.length === 0 && $('#lines').length > 0) {
+      lines = $('#lines option').map(function () { return $(this).val(); }).get();
+    }
 
     if (!dateRangeStr || !dateRangeStr.includes(' - ')) {
       Swal.fire('Select a date range', '', 'warning');

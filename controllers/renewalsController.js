@@ -1,6 +1,6 @@
 import { pool } from "../config/dbConfig.js";
 
-//  UTILIDADES DE FECHA 
+// UTILIDADES DE FECHA 
 export function getMonthStartDate(monthOffset = 0) {
   const date = new Date();
   date.setMonth(date.getMonth() + monthOffset, 1);
@@ -29,7 +29,7 @@ function convertMoneyToNumber(moneyValue) {
   return 0;
 }
 
-//  CÁLCULO DE PORCENTAJES
+// CÁLCULO DE PORCENTAJES
 function calculatePercentages(pr, pl, totalPolicies) {
   let percentRen = 0;
   if (totalPolicies > 0) percentRen = (pr.policies / totalPolicies) * 100;
@@ -41,7 +41,7 @@ function calculatePercentages(pr, pl, totalPolicies) {
   };
 }
 
-// ---- SUMA PRECISA ----
+// SUMA PRECISA
 function preciseMoneySum(values) {
   return values.reduce((sum, value) => {
     const numValue = convertMoneyToNumber(value);
@@ -49,14 +49,14 @@ function preciseMoneySum(values) {
   }, 0);
 }
 
-// ---- OBTENER TOTALES DESDE BD ----
+// OBTENER TOTALES DESDE BD
 async function getDatabaseTotals(monthEnd, locationId) {
   const totalsSql = `SELECT * FROM intranet.renewals_upcoming_totals($1, $2)`;
   const totalsResult = await pool.query(totalsSql, [monthEnd, locationId]);
   return totalsResult.rows[0] || { premium: 0, policies: 0 };
 }
 
-// ---- CONTROLADOR PARA LA VISTA SSR ----
+// CONTROLADOR PARA LA VISTA SSR
 export const agencyUpcomingRenewalsView = async (req, res) => {
   try {
     const locationId = req.scope?.locationId || req.user?.location_id;
@@ -149,7 +149,7 @@ export const agencyUpcomingRenewalsView = async (req, res) => {
   }
 };
 
-// ---- CONTROLADOR PARA EL ENDPOINT JSON ----
+// CONTROLADOR PARA EL ENDPOINT JSON
 export const agencyUpcomingRenewalsData = async (req, res) => {
   try {
     const locationId = req.scope?.locationId || req.user?.location_id;
@@ -212,7 +212,7 @@ export const agencyUpcomingRenewalsData = async (req, res) => {
   }
 };
 
-// ---- FUNCIONES AUXILIARES ----
+// FUNCIONES AUXILIARES
 export function getNextMonthsArray(locale = "en-US", count = 3) {
   return Array.from({ length: count }).map((_, i) => {
     const date = new Date();
@@ -221,6 +221,7 @@ export function getNextMonthsArray(locale = "en-US", count = 3) {
   });
 }
 
+// EXPORT POR DEFECTO (para import * as renewalsController)
 export default {
   getMonthStartDate,
   getMonthEndDate,

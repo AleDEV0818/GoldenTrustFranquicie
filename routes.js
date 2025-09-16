@@ -1,8 +1,6 @@
 import express from "express";
 import passport from "passport";
 import { authenticate } from "./config/passportConfig.js";
-
-// Multer para manejar upload de archivos (importación de códigos)
 import multer from "multer";
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -57,8 +55,8 @@ import { passwordMail } from "./controllers/mailer.js";
 import gtiDirectoryRouter from "./controllers/gtusers.js";
 
 // ----- CONTROLADORES (RENEWALS) -----
-import notRenewalsController from "./controllers/NotRenewalsController.js";
-import renewalsController from "./controllers/renewalsController.js";
+import * as notRenewalsController from "./controllers/NotRenewalsController.js";
+import * as renewalsController from "./controllers/renewalsController.js";
 
 // ----- CONTROLADORES (MENSAJES / VIDEO) -----
 import {
@@ -145,17 +143,14 @@ import {
   fetchMissingContactErrors,
   renderMissingContactErrorsView,
   verifyContactsEmails,
-  // IMPORTS para KPIs dinámicos por location:
   fetchActiveClientsCount,
   fetchMissingContactSummary
 } from "./controllers/missing-contact-errorsController.js";
 
 const router = express.Router();
 
-// Control fino de logs del scopeLocation
 const SCOPE_DEBUG = process.env.SCOPE_DEBUG === "1";
 
-// Middleware global
 router.use((req, res, next) => {
   res.locals.currentPath = req.originalUrl || req.path || "";
   next();
@@ -273,11 +268,36 @@ router.get("/users/statistics/csr-policies/data/:group_by_type/:group_name", ren
 router.get("/users/statistics/csr-policies/summary/:group_by_type/:group_name", renewalsAuth, fetchCsrPoliciesSummary);
 
 // RENEWALS (orden: auth -> scopeLocation)
-router.get("/users/renewals/agency-upcoming-renewals", renewalsAuth, scopeLocation, renewalsController.agencyUpcomingRenewalsView);
-router.post("/users/renewals/agency-upcoming-renewals/data", renewalsAuth, scopeLocation, renewalsController.agencyUpcomingRenewalsData);
-router.get("/users/renewals/agency-expired-not-renewed", renewalsAuth, scopeLocation, notRenewalsController.expiredNotRenewedView);
-router.post("/users/renewals/agency-expired-not-renewed/data-month", renewalsAuth, scopeLocation, notRenewalsController.getExpiredPolicies);
-router.post("/users/renewals/agency-lost-renewals-by-line-kpis", renewalsAuth, scopeLocation, notRenewalsController.getLostRenewalKPIs);
+router.get(
+  "/users/renewals/agency-upcoming-renewals",
+  renewalsAuth,
+  scopeLocation,
+  renewalsController.agencyUpcomingRenewalsView
+);
+router.post(
+  "/users/renewals/agency-upcoming-renewals/data",
+  renewalsAuth,
+  scopeLocation,
+  renewalsController.agencyUpcomingRenewalsData
+);
+router.get(
+  "/users/renewals/agency-expired-not-renewed",
+  renewalsAuth,
+  scopeLocation,
+  notRenewalsController.expiredNotRenewedView
+);
+router.post(
+  "/users/renewals/agency-expired-not-renewed/data-month",
+  renewalsAuth,
+  scopeLocation,
+  notRenewalsController.getExpiredPolicies
+);
+router.post(
+  "/users/renewals/agency-lost-renewals-by-line-kpis",
+  renewalsAuth,
+  scopeLocation,
+  notRenewalsController.getLostRenewalKPIs
+);
 
 // TELEVISOR
 router.get("/televisor/totals", renewalsAuth, (req, res) => {

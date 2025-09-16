@@ -29,11 +29,6 @@ $(document).ready(function () {
     "Commercial Lines"
   ];
 
-  /**
-   * Formatea un número entero con separador de miles.
-   * @param {number|string} value
-   * @returns {string}
-   */
   function formatInteger(value) {
     return Number(value || 0).toLocaleString('en-US', {
       minimumFractionDigits: 0,
@@ -41,17 +36,11 @@ $(document).ready(function () {
     });
   }
 
-  /**
-   * Formatea montos como $1,356,957 (natural, sin decimales)
-   * @param {number|string} value
-   * @returns {string}
-   */
   function formatPremium(value) {
     let num = 0;
     if (typeof value === "number") {
       num = value;
     } else if (typeof value === "string") {
-      // Quita todo menos números y punto decimal, solo parte entera
       const clean = value.replace(/[^0-9.]/g, '');
       num = parseInt(clean, 10);
       if (isNaN(num)) num = 0;
@@ -142,11 +131,6 @@ $(document).ready(function () {
     $(this).val('');
   });
 
-  /**
-   * Devuelve el label correcto según el valor seleccionado en group_by
-   * @param {string} val
-   * @returns {string}
-   */
   function getGroupByLabel(val) {
     if (!val) return "Name";
     if (val.toLowerCase() === "csr") return "CSR";
@@ -155,10 +139,6 @@ $(document).ready(function () {
     return "Name";
   }
 
-  /**
-   * Cambia el encabezado de la columna "Name" según el group_by seleccionado.
-   * También actualiza el texto descriptivo del ranking.
-   */
   function updateGroupByHeader() {
     let val = $('#group_by').val();
     if (Array.isArray(val)) val = val[0];
@@ -207,7 +187,6 @@ $(document).ready(function () {
         data: "premium", 
         title: "Premium", 
         render: function(data) {
-          // SIEMPRE natural, miles y sin decimales
           return formatPremium(data);
         }
       }
@@ -236,13 +215,6 @@ $(document).ready(function () {
     ]
   });
 
-  /**
-   * Construye los parámetros de la URL para el detalle del grupo (CSR, agente o productor)
-   * @param {string} groupByType
-   * @param {string} groupId
-   * @param {string} groupAlias
-   * @returns {URLSearchParams}
-   */
   function buildDetailParams(groupByType, groupId, groupAlias) {
     const selectedLines = $('#lines').val() || [];
     let linesParam = [];
@@ -264,9 +236,6 @@ $(document).ready(function () {
     return params;
   }
 
-  /**
-   * Inserta el resumen debajo de la tabla, si no existe en el DOM.
-   */
   function insertSummaryBoxIfNeeded() {
     if (!$('#datatable-summary').length) {
       $('.datatable-summary-col').html(`
@@ -280,9 +249,6 @@ $(document).ready(function () {
   }
   insertSummaryBoxIfNeeded();
 
-  /**
-   * Actualiza el resumen de la tabla (total de cuentas y de primas).
-   */
   function updateTableSummary() {
     let data = table.rows({ search: 'applied' }).data();
     let totalCount = 0;
@@ -306,7 +272,6 @@ $(document).ready(function () {
     );
   }
 
-  //  Ordenar y numerar filas, actualizar resumen y destacar top 3 
   table.on('order.dt search.dt', function () {
     table.column(0, { search: 'applied', order: 'applied' }).nodes().each(function (cell, i) {
       cell.innerHTML = i + 1;
@@ -335,12 +300,23 @@ $(document).ready(function () {
    */
   function searchCsrRanking() {
     const locations = $('#locations').val() || [];
-    const business_types = $('#business_type').val() || [];
+    let business_types = $('#business_type').val() || [];
     const criteria = $('#criteria').val();
     const dateRangeStr = $('#dates').val();
-    const policy_status = $('#policy_status').val() || [];
-    const lines = $('#lines').val() || [];
+    let policy_status = $('#policy_status').val() || [];
+    let lines = $('#lines').val() || [];
     const group_by = $('#group_by').val() || [];
+
+    // Si NO hay ningún filtro seleccionado, toma todos los valores posibles
+    if (business_types.length === 0) {
+      business_types = $('#business_type option').map(function () { return $(this).val(); }).get();
+    }
+    if (policy_status.length === 0) {
+      policy_status = $('#policy_status option').map(function () { return $(this).val(); }).get();
+    }
+    if (lines.length === 0 && $('#lines').length > 0) {
+      lines = $('#lines option').map(function () { return $(this).val(); }).get();
+    }
 
     if (!dateRangeStr || !dateRangeStr.includes(' - ')) {
       Swal.fire('Select a date range', '', 'warning');
