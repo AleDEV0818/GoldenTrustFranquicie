@@ -11,12 +11,6 @@
 
 // ---------- UTILIDADES DE FORMATO ----------
 
-/**
- * Formatea una fecha a formato MM/DD/YYYY (estilo USA).
- * Si la fecha es inválida devuelve ''.
- * @param {string} dateStr - Fecha en formato reconocible por Date.
- * @returns {string} Fecha formateada o '' si inválida.
- */
 function formatUSDate(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
@@ -27,11 +21,6 @@ function formatUSDate(dateStr) {
   return `${month}/${day}/${year}`;
 }
 
-/**
- * Formatea un número entero agregando comas como separador de miles.
- * @param {number|string} value - Número a formatear.
- * @returns {string} Número formateado.
- */
 function formatInteger(value) {
   return Number(value || 0).toLocaleString('en-US', {
     minimumFractionDigits: 0,
@@ -39,12 +28,6 @@ function formatInteger(value) {
   });
 }
 
-/**
- * Formatea el premium como USD, separador de miles y SIN decimales.
- * Ejemplo: $11,837
- * @param {number|string} value - Valor a formatear.
- * @returns {string} Premium en formato moneda.
- */
 function formatCurrency(value) {
   if (typeof value === "string") {
     let clean = value.replace(/[^0-9]/g, '');
@@ -76,6 +59,13 @@ $(document).ready(function () {
         let label = bt === 'N' ? 'New Business' : bt === 'R' ? 'Renewal' : bt === 'W' ? 'Rewrite' : '';
         if (label) $('#business_type').append(`<option value="${bt}">${label}</option>`);
       });
+      $('#business_type').selectpicker('refresh');
+
+      // Selecciona valor seguro si existe (ejemplo: 'N')
+      const businessTypeDefault = 'N'; // Cambia esto si el valor por defecto viene del backend
+      if (businessTypeDefault && $('#business_type option[value="' + businessTypeDefault + '"]').length) {
+        $('#business_type').selectpicker('val', businessTypeDefault);
+      }
 
       // Policy Status
       $('#policy_status').empty();
@@ -88,6 +78,12 @@ $(document).ready(function () {
           ps === 'D' ? 'Deleted' : '';
         if (label) $('#policy_status').append(`<option value="${ps}">${label}</option>`);
       });
+      $('#policy_status').selectpicker('refresh');
+
+      const policyStatusDefault = 'A'; // Ejemplo de valor por defecto
+      if (policyStatusDefault && $('#policy_status option[value="' + policyStatusDefault + '"]').length) {
+        $('#policy_status').selectpicker('val', policyStatusDefault);
+      }
 
       // Product Lines
       if ($('#lines').length && Array.isArray(resp.lines)) {
@@ -96,17 +92,19 @@ $(document).ready(function () {
           $('#lines').append(`<option value="${line}">${line}</option>`);
         });
         $('#lines').selectpicker('refresh');
-      }
 
-      $('#business_type').selectpicker('refresh');
-      $('#policy_status').selectpicker('refresh');
+        // Valor por defecto para lines
+        const lineDefault = resp.lines[0]; // puedes cambiarlo según tu lógica
+        if (lineDefault && $('#lines option[value="' + lineDefault + '"]').length) {
+          $('#lines').selectpicker('val', lineDefault);
+        }
+      }
     } else {
       console.warn("No se pudieron cargar los filtros de líneas/políticas.");
     }
   });
 
   // LÓGICA DE LOCATIONS CORPORATE 
-  // Si el usuario selecciona "Corporate" en el select de locations, se seleccionan automáticamente todos los IDs de corporate
   $('#locations').on('changed.bs.select', function () {
     const $select = $('#locations');
     const values = $select.val() || [];
@@ -117,11 +115,9 @@ $(document).ready(function () {
     const corporateValue = corporateOption.val();
 
     if (values.includes(corporateValue)) {
-      // Si se selecciona "Corporate", agregar todos los IDs de corporate al valor del select
       const newValues = Array.from(new Set([corporateValue, ...corporateLocationIds, ...values]));
       $select.selectpicker('val', newValues);
     } else {
-      // Si se deselecciona "Corporate", quitar todos los IDs de corporate del select
       const filtered = (values || []).filter(
         v => v !== corporateValue && !corporateLocationIds.includes(v)
       );
@@ -130,7 +126,6 @@ $(document).ready(function () {
   });
 
   // DATE RANGE PICKER 
-  // Inicializa el rango de fechas para búsqueda
   $('#dates').daterangepicker({
     locale: { format: 'YYYY-MM-DD' },
     autoUpdateInput: false,
@@ -146,7 +141,6 @@ $(document).ready(function () {
   });
 
   // DATATABLE PRINCIPAL
-  // Inicializa la tabla de pólizas próximas a renovar
   const table = $('.datatables-upcoming-renewals').DataTable({
     columns: [
       { data: 'customer' },
@@ -202,9 +196,6 @@ $(document).ready(function () {
   });
 
   // RESUMEN DE LA TABLA
-  /**
-   * Inserta el contenedor del resumen si no existe en el DOM.
-   */
   function insertSummaryBoxIfNeeded() {
     if (!$('#datatable-summary').length) {
       $('.datatable-summary-col').html(`
@@ -218,10 +209,6 @@ $(document).ready(function () {
   }
   insertSummaryBoxIfNeeded();
 
-  /**
-   * Actualiza el resumen de la tabla (cantidad de pólizas y suma de primas).
-   * Se ejecuta cada vez que la tabla se dibuja.
-   */
   function updateTableSummary() {
     let data = table.rows({ search: 'applied' }).data();
     let totalPolicies = data.length;
@@ -251,16 +238,10 @@ $(document).ready(function () {
   table.draw();
 
   // FILTRO Y BÚSQUEDA DE POLIZAS
-  // Al hacer click en el botón de buscar, ejecuta la búsqueda avanzada con filtros
   $('.btn-card-block-overlay').on('click', function () {
     searchPolicies();
   });
 
-  /**
-   * Ejecuta la búsqueda de pólizas con los filtros seleccionados.
-   * Muestra spinner y mensajes con SweetAlert2.
-   * Actualiza la tabla y el resumen.
-   */
   function searchPolicies() {
     const locations = $('#locations').val() || [];
     const business_types = $('#business_type').val() || [];
@@ -314,7 +295,6 @@ $(document).ready(function () {
         table.clear();
         if (resp.success && Array.isArray(resp.data) && resp.data.length) {
           resp.data.forEach(row => {
-            // Formatea fechas antes de agregar la fila
             table.row.add({
               ...row,
               binder_date: row.binder_date ? moment(row.binder_date).format('YYYY-MM-DD') : '',

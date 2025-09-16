@@ -28,11 +28,19 @@ document.addEventListener('DOMContentLoaded', function() {
     'agency-month-panel',
     'company-month-panel'
   ];
-  
+
+  // Mapeo de IDs de paneles a claves de la API
+  const PANEL_KEY_MAP = {
+    'agency-today-panel': 'agencyToday',
+    'company-today-panel': 'companyToday',
+    'agency-month-panel': 'agencyMonth',
+    'company-month-panel': 'companyMonth'
+  };
+
   // Objeto para almacenar los paneles encontrados
   const PANELS = {};
   let allPanelsExist = true;
-  
+
   // Verifica que todos los paneles requeridos existan en el DOM
   PANEL_IDS.forEach(id => {
     const panelElement = document.getElementById(id);
@@ -42,16 +50,16 @@ document.addEventListener('DOMContentLoaded', function() {
       allPanelsExist = false;
     }
   });
-  
+
   // Si falta algún panel requerido, no continúa
   if (!allPanelsExist) {
     return;
   }
-  
+
   // ===== ESTADO DE LA APP =====
   let updateIntervalId = null; // Referencia al temporizador de intervalo
   let isUpdating = false;      // Indica si hay una actualización en curso
-  
+
   /**
    * Valida la estructura del objeto de métricas devuelto por la API.
    * @param {Object} metrics - El objeto de métricas.
@@ -62,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!requiredKeys.every(key => key in metrics)) {
       return false;
     }
-    
+
     // Cada panel debe tener las siguientes métricas
     const panelKeys = ['nb_prem', 'nb_pol', 'rn_prem', 'rn_pol', 'rw_prem', 'rw_pol', 'tot_prem', 'tot_pol'];
     return requiredKeys.every(key => {
@@ -79,35 +87,35 @@ document.addEventListener('DOMContentLoaded', function() {
     // Evita ejecutar múltiples actualizaciones simultáneas
     if (isUpdating) return;
     isUpdating = true;
-    
+
     try {
       toggleLoadingState(true); // Muestra estado de carga
-      
+
       // Usa AbortController para controlar el tiempo de espera de la solicitud
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-      
+
       const response = await fetch(API_ENDPOINT, {
         signal: controller.signal,
         headers: {
           'Cache-Control': 'no-cache'
         }
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
-      
+
       const metrics = await response.json();
-      
+
       // Asegura que la estructura de métricas es válida
       if (!isValidMetrics(metrics)) {
         throw new Error('Respuesta de API inválida: Estructura de datos incorrecta');
       }
-      
+
       // Actualiza los paneles de métricas
       updateAllPanels(metrics);
 
@@ -117,19 +125,20 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     } catch (error) {
       // El manejo de errores es silencioso (puedes mejorarlo para mostrar error al usuario)
+      console.error('Error actualizando métricas del dashboard:', error);
     } finally {
       toggleLoadingState(false); // Oculta estado de carga
       isUpdating = false;
     }
   }
-  
+
   /**
    * Actualiza todos los paneles de métricas con los nuevos datos.
    * @param {Object} metrics - El objeto de métricas obtenido de la API.
    */
   function updateAllPanels(metrics) {
     PANEL_IDS.forEach(id => {
-      const metricKey = id.replace('-panel', ''); // Ejemplo: 'agency-today-panel' => 'agency-today'
+      const metricKey = PANEL_KEY_MAP[id]; // Mapeo explícito
       const panel = PANELS[id];
       const data = metrics[metricKey];
       if (panel && data) {
@@ -137,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
-  
+
   /**
    * Actualiza los valores individuales de un panel de métricas.
    * @param {HTMLElement} panel - El elemento del panel.
@@ -149,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateMetricElement(panel, 'rw', data.rw_prem, data.rw_pol);
     updateMetricElement(panel, 'tot', data.tot_prem, data.tot_pol);
   }
-  
+
   /**
    * Actualiza un elemento específico de métrica dentro de un panel.
    * @param {HTMLElement} panel - El panel.
@@ -221,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Se ignoran los errores silenciosamente
     }
   }
-  
+
   /**
    * Inicia el sistema de actualización automática.
    * - Realiza una actualización inmediata al cargar la página.

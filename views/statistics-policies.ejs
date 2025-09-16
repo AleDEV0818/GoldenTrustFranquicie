@@ -785,124 +785,124 @@ div.dt-button-collection .dt-button:hover {
     <!--/ Renewals Pills -->
 
     <!-- Filtros -->
-    <div class="row justify-content-center">
-      <div class="col-12">
-        <div class="card shadow-sm border-0">
-          <div class="card-body">
-            <form id="policies-filters-form">
-              <div class="row gy-3 gx-4 align-items-end">
-                <!-- Locations -->
-                <div class="col-12 col-md-6 col-lg-2">
-                  <label for="locations" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
-                    <i class="ti ti-map-pin text-primary"></i> Locations
-                  </label>
-                  <% if(user.location_type === 2 || user.location_type === 4) { %>
-                    <div class="form-control-plaintext fw-bold ps-2">
-                      <%= locations[0].alias %>
-                      <input type="hidden" id="locations" name="locations" value="<%= locations[0].location_id %>">
-                    </div>
-                  <% } else { %>
-                    <select
-                      id="locations"
+ <div class="row justify-content-center">
+  <div class="col-12">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <form id="policies-filters-form">
+          <div class="row gy-3 gx-4 align-items-end">
+            <!-- Locations -->
+            <div class="col-12 col-md-6 col-lg-2">
+              <label for="locations" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
+                <i class="ti ti-map-pin text-primary"></i> Locations
+              </label>
+              <% if(user.location_type === 2 || user.location_type === 4) { %>
+                <div class="form-control-plaintext fw-bold ps-2">
+                  <%= locations[0].alias %>
+                  <input type="hidden" id="locations" name="locations" value="<%= locations[0].location_id %>">
+                </div>
+              <% } else { %>
+                <select
+                  id="locations"
+                  class="selectpicker w-100"
+                  data-style="btn-outline-secondary"
+                  data-actions-box="true"
+                  data-selected-text-format="count > 2"
+                  name="locations"
+                  multiple
+                  title="Select locations"
+                >
+                  <% locations.forEach((element) => { %>
+                    <option value="<%= element.location_id %>"><%= element.alias %></option>
+                  <% }); %>
+                </select>
+              <% } %>
+            </div>
+            <!-- Business Types -->
+            <div class="col-12 col-md-6 col-lg-2">
+              <label for="business_type" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
+                <i class="ti ti-briefcase text-success"></i> Business Type
+              </label>
+              <select id="business_type"
                       class="selectpicker w-100"
                       data-style="btn-outline-secondary"
-                      data-actions-box="true"
-                      data-selected-text-format="count > 2"
-                      name="locations"
                       multiple
-                      title="Select locations"
-                    >
-                      <% locations.forEach((element) => { %>
-                        <option value="<%= element.location_id %>"><%= element.alias %></option>
-                      <% }); %>
-                    </select>
-                  <% } %>
-                </div>
-                <!-- Business Types -->
-                <div class="col-12 col-md-6 col-lg-2">
-                  <label for="business_type" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
-                    <i class="ti ti-briefcase text-success"></i> Business Type
-                  </label>
-                  <select id="business_type"
-                          class="selectpicker w-100"
-                          data-style="btn-outline-secondary"
-                          multiple
-                          data-actions-box="true"
-                          data-selected-text-format="count > 1"
-                          data-count-selected-text="{0} types selected"
-                          name="business_type"
-                          title="Select business types">
-                    <!-- Options filled dynamically by JS -->
-                  </select>
-                </div>
-                <!-- Policy Status -->
-                <div class="col-12 col-md-6 col-lg-2">
-                  <label for="policy_status" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
-                    <i class="ti ti-file-check text-info"></i> Policy Status
-                  </label>
-                  <select id="policy_status"
-                          class="selectpicker w-100"
-                          data-style="btn-outline-secondary"
-                          multiple
-                          data-actions-box="true"
-                          data-selected-text-format="count > 1"
-                          name="policy_status"
-                          title="Select policy status">
-                    <!-- Options filled dynamically by JS -->
-                  </select>
-                </div>
-                <!-- Product Lines -->
-                <div class="col-12 col-md-6 col-lg-2">
-                  <label for="lines" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
-                    <i class="ti ti-layers-intersect text-warning"></i> Line of Business
-                  </label>
-                  <select id="lines"
-                          class="selectpicker w-100"
-                          data-style="btn-outline-secondary"
-                          multiple
-                          data-actions-box="true"
-                          data-selected-text-format="count > 1"
-                          name="lines"
-                          title="Select product lines">
-                    <!-- Options filled dynamically by JS -->
-                  </select>
-                </div>
-                <!-- Criteria -->
-                <div class="col-12 col-md-6 col-lg-2">
-                  <label for="criteria" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
-                    <i class="ti ti-filter text-dark"></i> Criteria
-                  </label>
-                  <select id="criteria" class="selectpicker w-100" data-style="btn-outline-secondary" name="criteria" title="Select criteria">
-                    <option value="binder_date">Binder Date</option>
-                    <option value="effective_date">Effective Date</option>
-                    <option value="exp_date">Expiration Date</option>
-                  </select>
-                </div>
-              </div>
-              <div class="row gy-3 gx-4 align-items-end mt-0">
-                <div class="col-12 col-md-8 col-lg-5">
-                  <label for="dates" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
-                    <i class="ti ti-calendar-range text-danger"></i> Date Is Between
-                  </label>
-                  <div class="input-group">
-                    <span class="input-group-text bg-light px-2">
-                      <i class="ti ti-calendar text-danger"></i>
-                    </span>
-                    <input type="text" id="dates" class="form-control border-start-0" name="dates" autocomplete="off" placeholder="Select date range" />
-                  </div>
-                </div>
-                <div class="col-12 col-md-4 col-lg-2 d-flex align-items-end">
-                  <button type="button" class="btn btn-gradient-primary btn-card-block-overlay w-100 rounded-pill shadow-sm">
-                    <i class="ti ti-search"></i>
-                    <span class="d-none d-md-inline"><b>Search</b></span>
-                  </button>
-                </div>
-              </div>
-            </form>
+                      data-actions-box="true"
+                      data-selected-text-format="count > 1"
+                      data-count-selected-text="{0} types selected"
+                      name="business_type"
+                      title="Select business types">
+                <!-- Options filled dynamically by JS -->
+              </select>
+            </div>
+            <!-- Policy Status -->
+            <div class="col-12 col-md-6 col-lg-2">
+              <label for="policy_status" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
+                <i class="ti ti-file-check text-info"></i> Policy Status
+              </label>
+              <select id="policy_status"
+                      class="selectpicker w-100"
+                      data-style="btn-outline-secondary"
+                      multiple
+                      data-actions-box="true"
+                      data-selected-text-format="count > 1"
+                      name="policy_status"
+                      title="Select policy status">
+                <!-- Options filled dynamically by JS -->
+              </select>
+            </div>
+            <!-- Product Lines -->
+            <div class="col-12 col-md-6 col-lg-2">
+              <label for="lines" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
+                <i class="ti ti-layers-intersect text-warning"></i> Line of Business
+              </label>
+              <select id="lines"
+                      class="selectpicker w-100"
+                      data-style="btn-outline-secondary"
+                      multiple
+                      data-actions-box="true"
+                      data-selected-text-format="count > 1"
+                      name="lines"
+                      title="Select product lines">
+                <!-- Options filled dynamically by JS -->
+              </select>
+            </div>
+            <!-- Criteria -->
+            <div class="col-12 col-md-6 col-lg-2">
+              <label for="criteria" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
+                <i class="ti ti-filter text-dark"></i> Criteria
+              </label>
+              <select id="criteria" class="selectpicker w-100" data-style="btn-outline-secondary" name="criteria" title="Select criteria">
+                <option value="binder_date">Binder Date</option>
+                <option value="effective_date">Effective Date</option>
+                <option value="exp_date">Expiration Date</option>
+              </select>
+            </div>
           </div>
-        </div>
+          <div class="row gy-3 gx-4 align-items-end mt-0">
+            <div class="col-12 col-md-8 col-lg-5">
+              <label for="dates" class="form-label mb-2 fw-semibold d-flex align-items-center gap-2">
+                <i class="ti ti-calendar-range text-danger"></i> Date Is Between
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light px-2">
+                  <i class="ti ti-calendar text-danger"></i>
+                </span>
+                <input type="text" id="dates" class="form-control border-start-0" name="dates" autocomplete="off" placeholder="Select date range" />
+              </div>
+            </div>
+            <div class="col-12 col-md-4 col-lg-2 d-flex align-items-end">
+              <button type="button" class="btn btn-gradient-primary btn-card-block-overlay w-100 rounded-pill shadow-sm">
+                <i class="ti ti-search"></i>
+                <span class="d-none d-md-inline"><b>Search</b></span>
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
+  </div>
+</div>
     <!--/ Filtros -->
 
 <!-- Policies List Table -->
